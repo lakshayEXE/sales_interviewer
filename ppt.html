@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InterviewAI | Management Pitch</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400&family=Inter:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #141413;
+            --surface: #1d1b18;
+            --primary: #cc785c;
+            --accent: #d97757;
+            --text: #faf9f5;
+            --text-muted: #b0aea5;
+            --text-dim: #87867f;
+            --green: #4ade80;
+            --red: #f87171;
+            --blue: #60a5fa;
+            --purple: #a78bfa;
+            --yellow: #facc15;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+
+        .grain {
+            position: fixed;
+            inset: 0;
+            background-image: radial-gradient(rgba(250, 249, 245, .03) 1px, transparent 1px);
+            background-size: 28px 28px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .glow {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80vw;
+            height: 80vh;
+            background: radial-gradient(circle, rgba(204, 120, 92, .08), transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .deck {
+            display: flex;
+            height: 100vh;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+            scrollbar-width: none;
+        }
+
+        .deck::-webkit-scrollbar {
+            display: none;
+        }
+
+        .slide {
+            min-width: 100vw;
+            height: 100vh;
+            scroll-snap-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 4rem 8vw;
+            position: relative;
+            z-index: 1;
+        }
+
+        .serif {
+            font-family: 'Fraunces', serif;
+        }
+
+        .mono {
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        h1 {
+            font-size: clamp(32px, 3.5vw, 56px);
+            font-weight: 300;
+            line-height: 1.1;
+            margin-bottom: 1rem;
+        }
+
+        p {
+            font-size: 1.05rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #cc785c, #d97757, #fb923c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .glass-card {
+            background: rgba(29, 27, 24, 0.6);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(250, 249, 245, 0.08);
+            border-radius: 24px;
+            padding: 2.5rem;
+            width: 100%;
+        }
+
+        .tag {
+            display: inline-block;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            background: rgba(255, 255, 255, 0.07);
+            color: var(--text-dim);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* SLIDE 1: Slider UI */
+        .slider-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .slider-value {
+            color: var(--primary);
+            font-weight: 600;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            margin-top: -8px;
+            box-shadow: 0 0 10px rgba(204, 120, 92, 0.5);
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-box {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 1.5rem;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 300;
+        }
+
+        .chart-container {
+            margin-top: 1rem;
+        }
+
+        .chart-bar-wrap {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .chart-label {
+            width: 80px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .chart-track {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .chart-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.3s ease;
+        }
+
+        /* SLIDE 2: Orchestrator Grid */
+        .workflow-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr 1fr;
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 1100px;
+            align-items: stretch;
+        }
+
+        .flow-box {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .flow-box.center-brain {
+            background: linear-gradient(180deg, rgba(204, 120, 92, 0.12) 0%, rgba(29, 27, 24, 0.6) 100%);
+            border-color: rgba(204, 120, 92, 0.3);
+            box-shadow: 0 10px 40px rgba(204, 120, 92, 0.1);
+        }
+
+        .mini-node-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .mini-node {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-left: 3px solid var(--primary);
+        }
+
+        /* SLIDE 3: Tri-Agent Grid */
+        .agent-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.1fr 1fr;
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        .agent-card {
+            background: rgba(29, 27, 24, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 2.2rem;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .agent-card.hero-saver {
+            background: rgba(74, 222, 128, 0.05);
+            border-color: rgba(74, 222, 128, 0.4);
+            box-shadow: 0 0 35px rgba(74, 222, 128, 0.1);
+        }
+
+        /* Slide Controls */
+        .controls {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 1rem;
+            z-index: 10;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text);
+            padding: 0.75rem 1.5rem;
+            border-radius: 99px;
+            cursor: pointer;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .nav-btn:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        @keyframes blink {
+            50% {
+                border-color: transparent;
+            }
+        }
+
+        @keyframes ping {
+
+            75%,
+            100% {
+                transform: scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        @keyframes text-pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="grain"></div>
+    <div class="glow"></div>
+
+    <div class="deck" id="deck">
+
+        <!-- <div class="slide" id="slide-1" style="gap: 4rem;">
+            <div style="flex: 1; max-width: 500px;">
+                <div class="mono"
+                    style="color: var(--primary); letter-spacing: 0.2em; font-size: 0.85rem; margin-bottom: 1rem; text-transform: uppercase;">
+                    The Top-of-Funnel Bottleneck
+                </div>
+                <h1 class="serif">InterviewAI:<br>The <span class="gradient-text">State Orchestrator</span></h1>
+                <p style="margin-bottom: 1.5rem;">Senior engineers are acting as expensive human routers. Every hour
+                    spent on a failed screening is an hour stolen from core product development.</p>
+                <p>Adjust the parameters on the right to see our actual monthly burn rate on technical screening.</p>
+            </div>
+
+            <div class="glass-card" style="flex: 1; max-width: 550px;">
+                <div class="slider-group">
+                    <div class="slider-header"><span>Senior Eng. Salary (Yearly)</span><span class="slider-value"
+                            id="val-salary">₹15,00,000</span></div>
+                    <input type="range" id="input-salary" min="1000000" max="2000000" step="50000" value="1500000">
+                </div>
+                <div class="slider-group">
+                    <div class="slider-header"><span>Candidates Screened / Month</span><span class="slider-value"
+                            id="val-candidates">50</span></div>
+                    <input type="range" id="input-candidates" min="10" max="150" step="10" value="50">
+                </div>
+                <div class="slider-group">
+                    <div class="slider-header"><span>Hours per Interview (Inc. prep/feedback)</span><span
+                            class="slider-value" id="val-hours">2 hrs</span></div>
+                    <input type="range" id="input-hours" min="1" max="5" step="0.5" value="2">
+                </div>
+                <div class="metrics-grid">
+                    <div class="metric-box">
+                        <div class="metric-label">Monthly Savings</div>
+                        <div class="metric-value gradient-text" id="out-savings"
+                            style="font-family: 'Fraunces', serif;">₹60,000</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">Eng. Hours Saved</div>
+                        <div class="metric-value" id="out-hours"
+                            style="color: var(--green); font-family: 'Fraunces', serif;">100 hrs</div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-bar-wrap"><span class="chart-label">Human Cost</span>
+                        <div class="chart-track">
+                            <div class="chart-fill" id="bar-human" style="background: var(--red); width: 100%;"></div>
+                        </div>
+                        <span class="mono" style="font-size: 0.85rem;" id="lbl-human">₹72,115</span>
+                    </div>
+                    <div class="chart-bar-wrap"><span class="chart-label">AI Cost</span>
+                        <div class="chart-track">
+                            <div class="chart-fill" id="bar-ai" style="background: var(--primary); width: 15%;"></div>
+                        </div>
+                        <span class="mono" style="font-size: 0.85rem;" id="lbl-ai">₹15,000</span>
+                    </div>
+                </div>
+            </div>
+        </div> -->
+
+        <div class="slide" id="slide-1" style="gap: 4rem;">
+            <div style="flex: 1; max-width: 450px; text-align: left;">
+                <div class="mono"
+                    style="color: var(--primary); letter-spacing: 0.15em; font-size: 0.85rem; margin-bottom: 1rem; font-weight: 600;">
+                    THE GROWTH BOTTLENECK</div>
+                <h1 class="serif">The Hiring "Scale Wall"</h1>
+                <p style="font-size: 1.2rem; color: var(--text); margin-top: 1.5rem; font-weight: 300;">
+                    We are currently capped by senior engineering time. We cannot grow our headcount without destroying
+                    our shipping velocity.
+                </p>
+                <div
+                    style="margin-top: 2.5rem; display: flex; align-items: center; gap: 1rem; color: var(--text-dim); font-size: 0.9rem;">
+                    <span style="font-size: 1.5rem;">🚀</span>
+                    <span>InterviewAI breaks the wall &rarr;</span>
+                </div>
+            </div>
+
+            <div class="glass-card"
+                style="flex: 1; max-width: 600px; display: flex; flex-direction: column; gap: 2rem;">
+
+                <div
+                    style="position: relative; height: 250px; display: flex; align-items: flex-end; gap: 2rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem;">
+                    <div
+                        style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; position: relative;">
+                        <div
+                            style="width: 100%; height: 180px; background: linear-gradient(to top, var(--red), transparent); border-radius: 8px 8px 0 0; opacity: 0.6;">
+                        </div>
+                        <span class="mono" style="font-size: 0.7rem; color: var(--red);">HUMAN CAPACITY</span>
+                    </div>
+                    <div
+                        style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; position: relative;">
+                        <div
+                            style="width: 100%; height: 250px; background: linear-gradient(to top, var(--green), transparent); border-radius: 8px 8px 0 0; opacity: 0.8;">
+                        </div>
+                        <span class="mono" style="font-size: 0.7rem; color: var(--green);">INTERVIEWAI</span>
+                    </div>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-box">
+                        <div class="metric-label">Human Ceiling</div>
+                        <div class="metric-value" style="color: var(--red); font-family: 'Fraunces', serif;">50/mo</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">AI Throughput</div>
+                        <div class="metric-value" style="color: var(--green); font-family: 'Fraunces', serif;">500+/mo
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= SLIDE 2: THE CANDIDATE EXPERIENCE ================= -->
+        <div class="slide" id="slide-2" style="flex-direction: column; padding-top: 2rem;">
+            <div style="text-align: center; max-width: 800px; margin-bottom: 2rem;">
+                <span class="mono" style="color: var(--blue); font-size: 0.8rem; letter-spacing: 0.2em;">THE CANDIDATE
+                    VIEWPORT</span>
+                <h1 class="serif">A Voice-First Workspace</h1>
+                <p>No clunky chat bots. Candidates get a professional Code editor, real-time voice interaction, and
+                    total transparency on their proctoring status.</p>
+            </div>
+
+            <div
+                style="width: 100%; max-width: 1150px; background: #0d0d0c; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; overflow: hidden; box-shadow: 0 25px 60px rgba(0,0,0,0.5); display: flex; flex-direction: column;">
+
+                <div
+                    style="display: flex; justify-content: space-between; padding: 1rem 1.5rem; background: rgba(29, 27, 24, 0.4); border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <div
+                            style="background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.2); color: var(--red); padding: 4px 10px; border-radius: 99px; font-size: 0.65rem; display: flex; align-items: center; gap: 6px; font-weight: 600; font-family: 'IBM Plex Mono', monospace; text-transform: uppercase;">
+                            <span
+                                style="width:6px;height:6px;background:var(--red);border-radius:50%;animation:pulse 2s infinite;"></span>
+                            LIVE
+                        </div>
+                        <div
+                            style="width: 36px; height: 36px; border-radius: 50%; background: rgba(204,120,92,0.15); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.9rem; font-weight: 600;">
+                            C</div>
+                        <div style="line-height: 1.2;">
+                            <div style="font-size: 0.95rem; font-weight: 600; color: var(--text);">Candidate</div>
+                            <div style="font-size: 0.7rem; color: var(--text-dim);">👤 4-stage interview</div>
+                        </div>
+                    </div>
+                    <div style="text-align: center; display: flex; flex-direction: column; justify-content: center;">
+                        <div class="mono"
+                            style="font-size: 0.6rem; color: var(--text-dim); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 2px;">
+                            Elapsed</div>
+                        <div class="mono" style="font-size: 1.3rem; font-weight: 600; color: var(--text);">04:12</div>
+                    </div>
+                    <div style="display: flex; gap: 0.8rem; align-items: center;">
+                        <button
+                            style="background: transparent; border: 1px solid rgba(255,255,255,0.1); color: var(--text); padding: 6px 14px; border-radius: 8px; font-size: 0.75rem; cursor: pointer;">&lt;/&gt;
+                            Hide IDE</button>
+                        <button
+                            style="background: transparent; border: none; color: var(--red); padding: 6px 14px; font-size: 0.8rem; font-weight: 500; cursor: pointer;">[&rarr;
+                            End session</button>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 280px; height: 460px;">
+
+                    <div style="position: relative; padding: 1.5rem; display: flex; flex-direction: column;">
+
+                        <div
+                            style="background: #141413; border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+                            <div
+                                style="padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.03); display: flex; justify-content: space-between; align-items: center;">
+                                <span class="mono"
+                                    style="font-size: 0.8rem; color: var(--text); font-weight: 500;">&lt;/&gt;
+                                    JavaScript</span>
+                                <div style="display: flex; gap: 6px;">
+                                    <span
+                                        style="width:10px;height:10px;border-radius:50%;background:var(--red);opacity:0.8;"></span>
+                                    <span
+                                        style="width:10px;height:10px;border-radius:50%;background:var(--yellow);opacity:0.8;"></span>
+                                    <span
+                                        style="width:10px;height:10px;border-radius:50%;background:var(--green);opacity:0.8;"></span>
+                                </div>
+                            </div>
+                            <div
+                                style="padding: 1.2rem; font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem; color: var(--text); display: flex; gap: 1.5rem; flex: 1;">
+                                <div
+                                    style="color: var(--text-dim); text-align: right; user-select: none; line-height: 1.7;">
+                                    1<br>2<br>3<br>4</div>
+                                <div style="line-height: 1.7;">
+                                    <span style="color: var(--green); opacity: 0.7;">// Write your solution
+                                        here...</span><br>
+                                    <span style="color: var(--purple);">function</span> <span
+                                        style="color: var(--blue);">twoSum</span>(nums, target) {<br>
+                                    &nbsp;&nbsp;<span style="color: var(--purple);">const</span> map = <span
+                                        style="color: var(--purple);">new</span> <span
+                                        style="color: var(--yellow);">Map</span>();<br>
+                                    <span
+                                        style="animation: blink 1s step-end infinite; border-right: 2px solid var(--text);"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div
+                            style="position: absolute; bottom: 24px; left: 24px; width: 160px; height: 110px; background: rgba(0,0,0,0.8); border-radius: 12px; border: 1px solid rgba(96,165,250,0.2); overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center;">
+                            <div
+                                style="position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.7); padding: 3px 6px; border-radius: 4px; display: flex; align-items: center; gap: 4px;">
+                                <span style="width:6px;height:6px;border-radius:50%;background:var(--red);"></span><span
+                                    style="font-size: 0.55rem; font-weight: bold; color: var(--text-muted); font-family: 'Inter';">REC</span>
+                            </div>
+                            <div
+                                style="position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.7); padding: 4px 8px; border-radius: 4px; display: flex; align-items: center;">
+                                <span
+                                    style="width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow: 0 0 8px var(--green);"></span>
+                            </div>
+                            <span style="font-size: 2.5rem; opacity: 0.2;">👤</span>
+                            <div
+                                style="position: absolute; bottom: 6px; left: 8px; font-size: 0.65rem; color: var(--text-muted);">
+                                You</div>
+                        </div>
+
+                        <div
+                            style="position: absolute; bottom: 24px; right: 24px; width: 200px; height: 140px; background: rgba(20,20,19,0.85); backdrop-filter: blur(12px); border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; box-shadow: 0 15px 40px rgba(0,0,0,0.6);">
+                            <div
+                                style="width: 50px; height: 50px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #93c5fd, #3b82f6); box-shadow: 0 0 40px rgba(59,130,246,0.5), inset 0 0 15px rgba(255,255,255,0.6); position: relative;">
+                                <div
+                                    style="position: absolute; inset: -15px; border-radius: 50%; border: 1px solid rgba(96,165,250,0.3); animation: ping 2.5s cubic-bezier(0, 0, 0.2, 1) infinite;">
+                                </div>
+                                <div
+                                    style="position: absolute; inset: -30px; border-radius: 50%; border: 1px solid rgba(96,165,250,0.15); animation: ping 2.5s cubic-bezier(0, 0, 0.2, 1) infinite; animation-delay: 0.5s;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        style="border-left: 1px solid rgba(255,255,255,0.05); background: rgba(29, 27, 24, 0.2); padding: 1.5rem; display: flex; flex-direction: column;">
+                        <div
+                            style="font-family: 'Fraunces', serif; font-size: 1.1rem; margin-bottom: 1.5rem; color: var(--text); display: flex; align-items: center; gap: 8px;">
+                            <span style="color: var(--primary);">🤖</span> Live Transcript
+                        </div>
+
+                        <div
+                            style="flex: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: 1.2rem;">
+                            <div>
+                                <span class="mono"
+                                    style="font-size: 0.65rem; color: var(--text-dim); display: block; margin-bottom: 4px;">CANDIDATE</span>
+                                <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">I think using
+                                    a hashmap will let us solve this in O(n) time.</p>
+                            </div>
+                            <div style="border-left: 2px solid var(--blue); padding-left: 0.8rem;">
+                                <span class="mono"
+                                    style="font-size: 0.65rem; color: var(--blue); display: block; margin-bottom: 4px;">AI
+                                    INTERVIEWER</span>
+                                <p style="font-size: 0.85rem; color: var(--text); line-height: 1.5;">Exactly. How would
+                                    you handle the edge case where the array has duplicates?</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <!-- ================= SLIDE 2: THE FLOW BUILDER ================= -->
+        <div class="slide" id="slide-2" style="flex-direction: column; padding-top: 2rem;">
+            <div style="text-align: center; max-width: 800px; margin-bottom: 3rem;">
+                <span class="mono" style="color: var(--primary); font-size: 0.8rem; letter-spacing: 0.2em;">NO-CODE
+                    ARCHITECTURE</span>
+                <h1 class="serif">Intelligent Flow Generation</h1>
+                <p>HR teams generate entire interview roadmaps by simply uploading a Job Description and Candidate
+                    Resume.</p>
+            </div>
+
+            <div class="workflow-grid">
+                <!-- Card 1: AI Generation -->
+                <div class="flow-box">
+                    <div>
+                        <span class="mono" style="color: var(--green); font-size: 0.8rem; text-transform: uppercase;">01
+                            / GENERATE</span>
+                        <h3 style="font-size: 1.25rem; color: var(--text); margin-top: 0.5rem;">AI-Driven Setup</h3>
+                        <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 0.5rem;">Upload JD & Resume.
+                            The system auto-generates the relevant interview nodes.</p>
+                        <div
+                            style="margin-top: 1rem; background: rgba(74, 222, 128, 0.05); padding: 0.8rem; border-radius: 8px; border: 1px solid rgba(74, 222, 128, 0.2);">
+                            <span class="mono" style="font-size: 0.75rem; color: var(--green);">JD $\rightarrow$ Flow
+                                Nodes</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: React Flow Builder -->
+                <div class="flow-box center-brain">
+                    <div style="text-align: center;">
+                        <span style="font-size: 2rem;">🧩</span>
+                        <h3 class="serif" style="font-size: 1.4rem; color: var(--text); margin-top: 0.5rem;">Visual
+                            React Flow Builder</h3>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem; line-height: 1.5;">
+                            Drag-and-drop nodes to define interview stages. Every stage is 100% customizable.
+                        </p>
+                    </div>
+
+                    <div
+                        style="background: rgba(0,0,0,0.4); padding: 1rem; border-radius: 12px; text-align: left; margin-top: 1rem;">
+                        <h4
+                            style="font-size: 0.75rem; color: var(--primary); margin-bottom: 0.5rem; font-family: 'IBM Plex Mono';">
+                            STAGE CONFIGURATION</h4>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">
+                            • DSA & Live Coding<br>
+                            • Topic filtering (Trees, DP, Hashing)<br>
+                            • Dynamic Difficulty (Easy/Med/Hard)<br>
+                            • "Allow Hints" toggles
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Custom Rounds -->
+                <div class="flow-box">
+                    <div>
+                        <span class="mono" style="color: var(--blue); font-size: 0.8rem; text-transform: uppercase;">03
+                            / CUSTOMIZE</span>
+                        <h3 style="font-size: 1.25rem; color: var(--text); margin-top: 0.5rem;">Round Patterning</h3>
+                        <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 0.5rem;">
+                            Need a custom round? Build it from scratch. Set the AI behavior, difficulty, and specific
+                            technical requirements.
+                        </p>
+                    </div>
+                    <div class="mini-node-list">
+                        <div class="mini-node" style="border-color: var(--blue);"><span>🔧</span> Custom Debug Round
+                        </div>
+                        <div class="mini-node" style="border-color: var(--purple);"><span>🧠</span> System Design
+                            Pattern</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" id="slide-4" style="flex-direction: column; padding-top: 2rem;">
+            <div style="text-align: center; max-width: 850px; margin-bottom: 3rem;">
+                <span class="tag" style="color: var(--green);">Architecture: Part 2</span>
+                <h1 class="serif">The Tri-Agent Architecture</h1>
+                <p>Streaming 45 minutes of candidate video to a Cloud LLM is cost-prohibitive. We bypass this entirely
+                    using an asymmetrical Tri-Agent structure.</p>
+            </div>
+
+            <div class="agent-grid">
+                <div class="agent-card">
+                    <div>
+                        <span class="mono" style="color: var(--blue); font-size: 0.75rem;">AGENT 01 &middot;
+                            WEBSOCKET</span>
+                        <h3 style="font-size: 1.3rem; margin: 0.5rem 0;">The Conversationalist</h3>
+                        <p style="font-size: 0.9rem; color: var(--text-muted);">
+                            Runs on Gemini Live. Handles natural speech and verbal probing based on the Orchestrator's
+                            active prompt.
+                        </p>
+                    </div>
+                    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05);">
+                        <span class="mono"
+                            style="font-size: 0.75rem; color: var(--text-dim); animation: text-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;">Payload:
+                            Audio + Text
+                            only</span>
+                    </div>
+                </div>
+
+                <div class="agent-card hero-saver">
+                    <div
+                        style="position: absolute; top: 0; right: 0; background: var(--green); color: #000; font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; font-weight: 700; padding: 0.3rem 1rem; border-bottom-left-radius: 12px;">
+                        SAVES 100% VIDEO API FEE
+                    </div>
+
+                    <div>
+                        <span class="mono" style="color: var(--green); font-size: 0.75rem;">AGENT 02 &middot; ON-DEVICE
+                            WASM</span>
+                        <h3 style="font-size: 1.3rem; margin: 0.5rem 0; color: var(--text);">Frontend ML Watchdog</h3>
+                        <p style="font-size: 0.9rem; color: var(--text-muted);">
+                            Uses MediaPipe running entirely inside the client's GPU. Tracks eye pitch, multiple faces,
+                            and copy-pastes locally.
+                        </p>
+                    </div>
+
+                    <div
+                        style="background: rgba(0,0,0,0.4); padding: 0.8rem 1rem; border-radius: 10px; margin-top: 1rem; border: 1px dashed rgba(74, 222, 128, 0.3);">
+                        <span class="mono"
+                            style="font-size: 0.75rem; color: var(--green); display: block; margin-bottom: 0.2rem;">THE
+                            "TRAP" MECHANISM:</span>
+                        <p style="font-size: 0.75rem; color: var(--text-dim);">If anomaly detected &rarr; sends
+                            lightweight JSON flag to Agent 1 to casually ask: <span
+                                style="color: var(--text); font-style: italic;">"Everything okay?"</span></p>
+                    </div>
+                </div>
+
+                <div class="agent-card">
+                    <div>
+                        <span class="mono" style="color: var(--accent); font-size: 0.75rem;">AGENT 03 &middot; ASYNC
+                            BATCH</span>
+                        <h3 style="font-size: 1.3rem; margin: 0.5rem 0;">The Evaluator</h3>
+                        <p style="font-size: 0.9rem; color: var(--text-muted);">
+                            Operates post-interview. Reads the raw text transcript to calculate a highly accurate,
+                            stage-by-stage scorecard.
+                        </p>
+                    </div>
+                    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05);">
+                        <span class="mono" style="font-size: 0.75rem; color: var(--accent);">High Accuracy &middot;
+                            Cheap Batch Tokens</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ================= SLIDE 4: THE DELIVERABLE (SCORECARD) ================= -->
+        <!-- ================= SLIDE 4: THE LIVE TRAP SANDBOX ================= -->
+        <div class="slide" id="slide-sandbox" style="flex-direction: column; padding-top: 2rem;">
+            <div style="text-align: center; max-width: 800px; margin-bottom: 2rem;">
+                <span class="mono" style="color: var(--yellow); font-size: 0.8rem; letter-spacing: 0.2em;">LIVE
+                    INTERACTIVE DEMO</span>
+                <h1 class="serif">The On-Device Trap Sandbox</h1>
+                <p>Don't take our word for it. Try to cheat right now. Click outside this browser window, exit
+                    fullscreen, or paste external code below.</p>
+            </div>
+
+            <div
+                style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 2rem; width: 100%; max-width: 1050px; text-align: left;">
+
+                <!-- Left: Candidate Workspace -->
+                <div class="glass-card"
+                    style="padding: 2rem; display: flex; flex-direction: column; gap: 1.5rem; background: #0d0d0c; border-color: rgba(255,255,255,0.1);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span class="mono" style="color: var(--text-dim); font-size: 0.8rem;">CANDIDATE VIEWPORT</span>
+                        <div style="display: flex; gap: 6px;">
+                            <span style="width:10px; height:10px; border-radius:50%; background: var(--red);"></span>
+                            <span style="width:10px; height:10px; border-radius:50%; background: var(--yellow);"></span>
+                            <span style="width:10px; height:10px; border-radius:50%; background: var(--green);"></span>
+                        </div>
+                    </div>
+
+                    <!-- Live Paste Box -->
+                    <div>
+                        <label class="mono"
+                            style="font-size: 0.75rem; color: var(--primary); display:block; margin-bottom:0.5rem;">👉
+                            TRY PASTING CODE HERE (&gt;40 CHARS):</label>
+                        <textarea id="demo-paste-box"
+                            placeholder="function stealCode() { return 'copied from stackoverflow'; }"
+                            style="width: 100%; height: 90px; background: rgba(0,0,0,0.6); border: 1px dashed rgba(204,120,92,0.4); border-radius: 8px; padding: 1rem; color: var(--green); font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem; resize: none;"></textarea>
+                    </div>
+
+                    <!-- Hardware Signal Simulators -->
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <span class="mono" style="font-size: 0.7rem; color: var(--text-dim);">HARDWARE EVENT
+                            OVERRIDES:</span>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button onclick="triggerViolation('BLUR', 'Window Focus Lost / Clicked Out', 8)"
+                                style="flex:1; padding: 0.6rem; background: rgba(250,204,21,0.1); border: 1px solid var(--yellow); color: var(--yellow); border-radius: 8px; font-family: 'IBM Plex Mono'; font-size: 0.75rem; cursor:pointer;">⚡
+                                Simulate Blur</button>
+                            <button onclick="triggerViolation('FULLSCREEN', 'Exited Fullscreen View', 15)"
+                                style="flex:1; padding: 0.6rem; background: rgba(248,113,113,0.1); border: 1px solid var(--red); color: var(--red); border-radius: 8px; font-family: 'IBM Plex Mono'; font-size: 0.75rem; cursor:pointer;">🚨
+                                Simulate Esc Fullscreen</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Proctor Live HUD -->
+                <div class="glass-card"
+                    style="padding: 2rem; display: flex; flex-direction: column; justify-content: space-between; background: rgba(29, 27, 24, 0.7);">
+                    <div>
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem;">
+                            <span class="mono" style="color: var(--green); font-size: 0.8rem; font-weight: 600;"
+                                id="hud-status">● WATCHDOG ACTIVE</span>
+                            <div style="text-align: right;">
+                                <span class="mono"
+                                    style="font-size: 0.7rem; color: var(--text-dim); display:block;">LIVE INTEGRITY
+                                    SCORE</span>
+                                <span
+                                    style="font-size: 2.5rem; font-weight: 700; color: var(--green); font-family: 'Fraunces', serif; line-height: 1;"
+                                    id="demo-trust-score">100%</span>
+                            </div>
+                        </div>
+
+                        <!-- Live Console Stream -->
+                        <div style="margin-top: 1.5rem;">
+                            <span class="mono"
+                                style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">PROCTOR
+                                EVENT LOG:</span>
+                            <div id="proctor-stream"
+                                style="background: rgba(0,0,0,0.5); border-radius: 8px; padding: 0.8rem; height: 140px; overflow-y: auto; font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; display: flex; flex-direction: column; gap: 0.4rem;">
+                                <div style="color: var(--text-dim);">[00:00] WebAssembly MediaPipe initialized.</div>
+                                <div style="color: var(--green);">[00:01] Hardware lock stable. Listening...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="resetSandbox()"
+                        style="width: 100%; padding: 0.5rem; background: transparent; border: 1px solid rgba(255,255,255,0.1); color: var(--text-dim); border-radius: 6px; font-size: 0.75rem; cursor: pointer; margin-top: 1rem;">Reset
+                        Sandbox</button>
+                </div>
+
+            </div>
+        </div>
+        <!-- ================= SLIDE 4: THE 3-LAYER TRAP ================= -->
+        <div class="slide" id="slide-5" style="flex-direction: column; padding-top: 2rem;">
+            <div style="text-align: center; max-width: 850px; margin-bottom: 4rem;">
+                <span class="mono" style="color: var(--yellow); font-size: 0.8rem; letter-spacing: 0.2em;">INTEGRITY
+                    ENGINE</span>
+                <h1 class="serif">The 3-Layer Defense</h1>
+                <p>Pure client-side proctoring catches the clumsy; hybrid Cloud verification catches the clever.</p>
+            </div>
+
+            <div
+                style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem; width: 100%; max-width: 1100px; text-align: left;">
+
+                <!-- Pillar 1: The DOM -->
+                <div class="glass-card"
+                    style="padding: 2.5rem; display: flex; flex-direction: column; justify-content: space-between; border-top: 3px solid var(--blue);">
+                    <div>
+                        <span class="mono" style="color: var(--blue); font-size: 0.75rem;">01 / DETERMINISTIC</span>
+                        <h3 style="font-size: 1.4rem; color: var(--text); margin: 0.5rem 0 1.5rem;">Browser Traps</h3>
+                        <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 1rem;">OS-level event
+                            listeners trap blatant breaches instantly with zero cloud compute.</p>
+                        <div class="mono" style="font-size: 0.85rem; color: var(--text-dim); line-height: 1.8;">
+                            <div>&bull; Code Paste (&gt;40 chars)</div>
+                            <div>&bull; Tab switched / minimized</div>
+                            <div>&bull; Multi-monitor detected</div>
+                        </div>
+                    </div>
+                    <div class="mono"
+                        style="font-size: 0.75rem; color: var(--blue); margin-top: 2rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05);">
+                        Action: Auto-penalize (-15pts)
+                    </div>
+                </div>
+
+                <!-- Pillar 2: MediaPipe -->
+                <div class="glass-card"
+                    style="padding: 2.5rem; display: flex; flex-direction: column; justify-content: space-between; border-top: 3px solid var(--yellow);">
+                    <div>
+                        <span class="mono" style="color: var(--yellow); font-size: 0.75rem;">02 / PROBABILISTIC</span>
+                        <h3 style="font-size: 1.4rem; color: var(--text); margin: 0.5rem 0 1.5rem;">On-Device ML</h3>
+                        <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 1rem;">Local MediaPipe
+                            models track 3D head geometry at ~4fps inside client GPU.</p>
+                        <div class="mono" style="font-size: 0.85rem; color: var(--text-dim); line-height: 1.8;">
+                            <div>&bull; Head Yaw (&gt;28&deg; off-center)[cite: 2]</div>
+                            <div>&bull; Multiple faces in frame[cite: 2]</div>
+                            <div>&bull; 2.5s Debounce buffer[cite: 2]</div>
+                        </div>
+                    </div>
+                    <div class="mono"
+                        style="font-size: 0.75rem; color: var(--yellow); margin-top: 2rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05);">
+                        Action: Raise "Soft Flag"[cite: 2]
+                    </div>
+                </div>
+
+                <!-- Pillar 3: Cloud Verification -->
+                <div class="glass-card"
+                    style="padding: 2.5rem; display: flex; flex-direction: column; justify-content: space-between; border-top: 3px solid var(--green); background: linear-gradient(180deg, rgba(74, 222, 128, 0.04) 0%, rgba(29, 27, 24, 0.6) 100%);">
+                    <div>
+                        <span class="mono" style="color: var(--green); font-size: 0.75rem;">03 / ESCALATION</span>
+                        <h3 style="font-size: 1.4rem; color: var(--text); margin: 0.5rem 0 1.5rem;">The Cloud Judge</h3>
+                        <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+                            When Layer 2 soft-flags, we dispatch <b>one single JPEG frame</b> to Gemini 2.5 Flash[cite:
+                            2].
+                        </p>
+                        <div
+                            style="background: rgba(0,0,0,0.5); padding: 1rem; border-radius: 8px; border: 1px solid rgba(74,222,128,0.2);">
+                            <span class="mono"
+                                style="font-size: 0.7rem; color: var(--green); display: block; margin-bottom: 4px;">THE
+                                PROMPT ARBITRATION:</span>
+                            <span style="font-size: 0.8rem; color: var(--text-dim); font-style: italic;">"Is this person
+                                looking at a cheat sheet, or just looking down at a blank scratchpad?"</span>
+                        </div>
+                    </div>
+                    <div class="mono"
+                        style="font-size: 0.75rem; color: var(--green); margin-top: 2rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05);">
+                        Protects against false positives
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ================= SLIDE 7: THE CALL TO ACTION ================= -->
+        <div class="slide" id="slide-7"
+            style="flex-direction: column; justify-content: center; align-items: center; background: radial-gradient(circle at center, rgba(204,120,92,0.15) 0%, var(--bg) 70%);">
+
+            <div style="text-align: center; max-width: 700px;">
+                <span class="mono"
+                    style="color: var(--primary); letter-spacing: 0.2em; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 1rem; display: block;">Ready
+                    to deploy?</span>
+                <h1 class="serif" style="font-size: 4rem;">The future of hiring<br>is <span
+                        class="gradient-text">browser-native</span>.</h1>
+                <p style="margin-top: 1.5rem; font-size: 1.3rem;">Stop burning senior engineering hours. Let’s integrate
+                    InterviewAI into our next hiring sprint.</p>
+            </div>
+
+            <!-- The Big CTA -->
+            <div style="margin-top: 4rem; display: flex; gap: 1.5rem; justify-content: center;">
+                <a href="https://interviewer-ai-9uls.vercel.app/" target="_blank"
+                    style="padding: 1.2rem 3rem; background: var(--primary); color: white; border-radius: 99px; text-decoration: none; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 1.1rem; box-shadow: 0 10px 30px rgba(204,120,92,0.3); transition: transform 0.2s;">
+                    Launch Live Session 🚀
+                </a>
+                <button onclick="window.location.reload()"
+                    style="padding: 1.2rem 3rem; background: transparent; border: 1px solid rgba(255,255,255,0.2); color: var(--text); border-radius: 99px; font-family: 'Inter', sans-serif; font-weight: 500; font-size: 1.1rem; cursor: pointer;">
+                    Reset Presentation
+                </button>
+            </div>
+
+            <!-- Footer Meta -->
+            <div
+                style="margin-top: 4rem; display: flex; gap: 2rem; color: var(--text-dim); font-family: 'IBM Plex Mono'; font-size: 0.75rem;">
+                <span>v1.0.0-PROD</span>
+                <span>Deploy: Vercel/Edge</span>
+                <span>Status: Fully Operational</span>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="controls">
+        <button class="nav-btn" onclick="document.getElementById('deck').scrollBy(-window.innerWidth, 0)">←
+            Prev</button>
+        <button class="nav-btn" onclick="document.getElementById('deck').scrollBy(window.innerWidth, 0)">Next →</button>
+    </div>
+
+
+    <script>
+        const inputs = { salary: document.getElementById('input-salary'), candidates: document.getElementById('input-candidates'), hours: document.getElementById('input-hours') };
+        const displays = { salary: document.getElementById('val-salary'), candidates: document.getElementById('val-candidates'), hours: document.getElementById('val-hours'), savings: document.getElementById('out-savings'), savedHours: document.getElementById('out-hours'), barHuman: document.getElementById('bar-human'), barAi: document.getElementById('bar-ai'), lblHuman: document.getElementById('lbl-human'), lblAi: document.getElementById('lbl-ai') };
+        const WORK_HOURS_YEAR = 2080; const AI_COST_PER_INTERVIEW = 300;
+
+        const formatINR = (num) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(num);
+
+        function calculate() {
+            const salary = parseFloat(inputs.salary.value); const candidates = parseFloat(inputs.candidates.value); const hours = parseFloat(inputs.hours.value);
+            displays.salary.textContent = formatINR(salary); displays.candidates.textContent = candidates; displays.hours.textContent = hours + ' hrs';
+
+            const hourlyRate = salary / WORK_HOURS_YEAR; const humanHours = candidates * hours; const humanCost = humanHours * hourlyRate;
+            const aiCost = candidates * AI_COST_PER_INTERVIEW; const savings = humanCost - aiCost;
+
+            displays.savedHours.textContent = humanHours + ' hrs'; displays.savings.textContent = formatINR(savings > 0 ? savings : 0);
+            displays.lblHuman.textContent = formatINR(humanCost); displays.lblAi.textContent = formatINR(aiCost);
+
+            const maxCost = Math.max(humanCost, aiCost);
+            displays.barHuman.style.width = (humanCost / maxCost * 100) + '%'; displays.barAi.style.width = (aiCost / maxCost * 100) + '%';
+        }
+        Object.values(inputs).forEach(input => input.addEventListener('input', calculate)); calculate();
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === 'Space') document.getElementById('deck').scrollBy(window.innerWidth, 0);
+            if (e.key === 'ArrowLeft') document.getElementById('deck').scrollBy(-window.innerWidth, 0);
+        });
+
+        // ================= SLIDE 4: PROCTOR SANDBOX LOGIC =================
+        let currentTrust = 100;
+        const proctorStream = document.getElementById('proctor-stream');
+        const trustDisplay = document.getElementById('demo-trust-score');
+        const pasteBox = document.getElementById('demo-paste-box');
+        const hudStatus = document.getElementById('hud-status');
+
+        function triggerViolation(type, text, penalty) {
+            currentTrust = Math.max(0, currentTrust - penalty);
+            trustDisplay.textContent = currentTrust + '%';
+
+            if (currentTrust < 75) { trustDisplay.style.color = 'var(--yellow)'; }
+            if (currentTrust < 50) { trustDisplay.style.color = 'var(--red)'; }
+
+            // Flash Anomaly Banner
+            hudStatus.style.color = 'var(--red)';
+            hudStatus.textContent = '🚨 INTEGRITY BREACH';
+            setTimeout(() => {
+                hudStatus.style.color = 'var(--green)';
+                hudStatus.textContent = '● WATCHDOG ACTIVE';
+            }, 1600);
+
+            // Append Log
+            const time = new Date().toTimeString().split(' ')[0];
+            const logItem = document.createElement('div');
+            logItem.style.color = penalty > 10 ? 'var(--red)' : 'var(--yellow)';
+            logItem.innerHTML = `[${time}] <b>${text}</b> <span style="float:right">-${penalty}pts</span>`;
+            proctorStream.appendChild(logItem);
+            proctorStream.scrollTop = proctorStream.scrollHeight;
+        }
+
+        // 1. Catch 40+ char code pastes live
+        if (pasteBox) {
+            pasteBox.addEventListener('paste', (e) => {
+                let pastedText = (e.clipboardData || window.clipboardData).getData('text');
+                if (pastedText.length >= 40) {
+                    triggerViolation('PASTE', `Pasted code block (${pastedText.length} chars)`, 15); // 15 pt penalty per README
+                } else {
+                    const time = new Date().toTimeString().split(' ')[0];
+                    const logItem = document.createElement('div');
+                    logItem.style.color = 'var(--green)';
+                    logItem.innerHTML = `[${time}] Safe paste (${pastedText.length} chars) - Permitted`;
+                    proctorStream.appendChild(logItem);
+                }
+            });
+        }
+
+        // 2. Catch actual window focus loss live! (Only triggers when sitting on Sandbox Slide)
+        window.addEventListener('blur', () => {
+            const slideSandbox = document.getElementById('slide-sandbox');
+            if (!slideSandbox) return;
+            const rect = slideSandbox.getBoundingClientRect();
+            if (Math.abs(rect.left) < window.innerWidth / 2) {
+                triggerViolation('BLUR', 'Actual Window Blur Detected!', 8); // 8 pt penalty per README[cite: 1, 2]
+            }
+        });
+
+        // 3. Catch tab switching
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                const slideSandbox = document.getElementById('slide-sandbox');
+                if (!slideSandbox) return;
+                const rect = slideSandbox.getBoundingClientRect();
+                if (Math.abs(rect.left) < window.innerWidth / 2) {
+                    triggerViolation('TAB_SWITCH', 'Tab Switched / Hidden!', 10);
+                }
+            }
+        });
+
+        // 4. Catch clicking outside the workspace cards
+        document.addEventListener('click', (e) => {
+            const slideSandbox = document.getElementById('slide-sandbox');
+            if (!slideSandbox) return;
+            const rect = slideSandbox.getBoundingClientRect();
+            if (Math.abs(rect.left) < window.innerWidth / 2) {
+                if (!e.target.closest('.glass-card') && !e.target.closest('.controls') && !e.target.closest('button')) {
+                    triggerViolation('CLICK_OUTSIDE', 'Clicked outside workspace!', 5);
+                }
+            }
+        });
+
+        function resetSandbox() {
+            currentTrust = 100;
+            trustDisplay.textContent = '100%';
+            trustDisplay.style.color = 'var(--green)';
+            proctorStream.innerHTML = '<div style="color: var(--text-dim);">[00:00] Sandbox reset. WebAssembly listening.</div>';
+            pasteBox.value = '';
+        }
+    </script>
+</body>
+
+</html>
