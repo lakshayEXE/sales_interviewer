@@ -21,12 +21,12 @@ export const CustomFlowNode: React.FC<CustomNodeProps> = ({ data, selected }) =>
     : 'bg-surface border-white/[0.06]';
 
   return (
-    <div className={`group relative w-64 rounded-xl border shadow-xl transition-all overflow-hidden ${stateClasses}`}>
+    <div className={`group relative w-64 rounded-xl border shadow-xl transition-all ${stateClasses}`}>
       <Handle
         type="target"
         position={Position.Top}
-        className="w-3 h-3 border-2 border-surface"
-        style={{ background: color }}
+        className="w-3 h-3 border-2 border-surface transition-transform hover:scale-150 hover:shadow-[0_0_10px_currentColor] cursor-crosshair z-50"
+        style={{ background: color, color: color, top: -6 }}
       />
 
       <span
@@ -54,8 +54,8 @@ export const CustomFlowNode: React.FC<CustomNodeProps> = ({ data, selected }) =>
       <Handle
         type="source"
         position={Position.Bottom}
-        className="w-3 h-3 border-2 border-surface"
-        style={{ background: color }}
+        className="w-3 h-3 border-2 border-surface transition-transform hover:scale-150 hover:shadow-[0_0_10px_currentColor] cursor-crosshair z-50"
+        style={{ background: color, color: color, bottom: -6 }}
       />
     </div>
   );

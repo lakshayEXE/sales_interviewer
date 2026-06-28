@@ -1,4 +1,4 @@
-import { Hand, Search, Phone, ShieldAlert, Megaphone, Lightbulb, Pencil, Flag, FileText, Mail, MonitorPlay } from 'lucide-react';
+import { Hand, Search, Phone, ShieldAlert, Megaphone, Lightbulb, Pencil, Flag, FileText, Mail, MonitorPlay, Handshake } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { NodeCategory } from '../../types/flow';
 
@@ -12,6 +12,7 @@ export const CATEGORY_ICONS: Record<NodeCategory, LucideIcon> = {
   'resume-review': FileText,
   'email-followup': Mail,
   presentation: MonitorPlay,
+  negotiation: Handshake,
   custom: Pencil,
   wrapup: Flag,
 };

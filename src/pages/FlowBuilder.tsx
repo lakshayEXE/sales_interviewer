@@ -17,9 +17,10 @@ import { NodePalette } from '../components/flow/NodePalette';
 import { NodeConfigPanel } from '../components/flow/NodeConfigPanel';
 import { CompanyConfigPanel } from '../components/flow/CompanyConfigPanel';
 import { InterviewerConfigPanel } from '../components/flow/InterviewerConfigPanel';
-import { GenerateFlowModal } from '../components/flow/GenerateFlowModal';
+
 import { generateFlowFromJD } from '../services/FlowGeneratorService';
 import { encodeSessionPayload } from '../utils/sessionPayload';
+import { validateAndSortFlow } from '../utils/flowSorter';
 import { NODE_CATEGORIES } from '../types/flow';
 import type { FlowNodeData, NodeCategory } from '../types/flow';
 import { Workflow } from 'lucide-react';
@@ -117,7 +118,7 @@ export const FlowBuilder: React.FC = () => {
 
     setNodes(nds => [...nds, newNode]);
 
-    if (tailNode) {
+    if (tailNode && !position) {
       setEdges(eds => [...eds, {
         id: `e_${tailNode.id}-${newNode.id}`,
         source: tailNode.id,
@@ -146,11 +147,21 @@ export const FlowBuilder: React.FC = () => {
 
   const generateLink = useCallback(() => {
     const state = useInterviewStore.getState();
+    
+    // Validate and sort nodes based on edges
+    const { sortedNodes, error } = validateAndSortFlow(state.nodes, state.edges);
+    
+    if (error) {
+      toast.error(error);
+      return;
+    }
+
     const sessionData = encodeSessionPayload({
-      nodes: state.nodes,
+      nodes: sortedNodes,
       config: state.interviewerConfig,
       companyInfo: state.companyInfo,
     });
+    
     const url = `${window.location.origin}/invite/${sessionData}`;
     navigator.clipboard.writeText(url);
     toast.success('Interview Link Copied to Clipboard!');
@@ -166,9 +177,9 @@ export const FlowBuilder: React.FC = () => {
     return () => setFlowNavActions(null);
   }, [setFlowNavActions, generateLink]);
 
-  const handleAIGenerate = async (jd: string, resume: string) => {
+  const handleAIGenerate = async (jd: string) => {
     try {
-      const flowData = await generateFlowFromJD(apiKey, jd, resume);
+      const flowData = await generateFlowFromJD(apiKey, jd);
 
       const newNodes: Node[] = flowData.map((data, i) => ({
         id: `node_${Date.now()}_${i}`,
@@ -199,8 +210,8 @@ export const FlowBuilder: React.FC = () => {
     <PageTransition className="p-0 h-full">
       <div className="w-full h-full flex relative">
         <NodePalette
-          onGenerateL1Click={() => handleAIGenerate('L1 outbound hunter cold calling', '')}
-          onGenerateL2Click={() => handleAIGenerate('L2 closer account executive', '')}
+          onGenerateL1Click={() => handleAIGenerate('L1 outbound hunter cold calling')}
+          onGenerateL2Click={() => handleAIGenerate('L2 closer account executive')}
           onAddStage={(category) => addStage(category)}
           stageCount={nodes.length}
         />

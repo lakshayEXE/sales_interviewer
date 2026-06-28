@@ -22,6 +22,13 @@ export class GeminiLiveService {
   // Fires when the model opens the Presentation Pitch Deck.
   public onOpenPresentation: (() => void) | null = null;
 
+  public onGatekeeper: (() => void) | null = null;
+  public onPromotion: (() => void) | null = null;
+  public onRejection: (() => void) | null = null;
+  public onRetry: (() => void) | null = null;
+  public onEndPhase: (() => void) | null = null;
+  public onEndSession: (() => void) | null = null;
+
   // Accumulate streaming transcription chunks until an utterance is complete.
   private userBuffer: string = '';
   private aiBuffer: string = '';
@@ -68,56 +75,93 @@ export class GeminiLiveService {
             parts: [{ text: systemInstructions }]
           },
           tools: [{
-            functionDeclarations: [
-              {
-                name: "set_current_question",
-                description: "Call this every time you ask the candidate a new question or pose a new coding/DSA problem, so it can be displayed on their screen. Pass the clean, self-contained question or problem statement without greetings, acknowledgments, or feedback.",
-                parameters: {
-                  type: "object",
-                  properties: {
-                    question: {
-                      type: "string",
-                      description: "The exact question or problem statement to show the candidate."
-                    }
-                  },
-                  required: ["question"]
-                }
-              },
-              {
-                name: "set_editor_code",
-                description: "Load starter code into the candidate's code editor. Use this for debug tasks (provide code with a genuine bug to find and fix) or optimize tasks (provide working but suboptimal code to improve). The editor opens automatically and the candidate edits the code in place.",
-                parameters: {
-                  type: "object",
-                  properties: {
-                    code: {
-                      type: "string",
-                      description: "The starter code to place in the editor."
+            functionDeclarations: (() => {
+              const tools: any[] = [
+                {
+                  name: "set_current_question",
+                  description: "Call this tool EVERY time you ask the candidate a new question or pose a new coding/DSA problem. The text you provide will be displayed on their screen. Keep it clean and self-contained (just the question/problem).",
+                  parameters: {
+                    type: "object",
+                    properties: {
+                      text: {
+                        type: "string",
+                        description: "The text of the question or problem to display."
+                      }
                     },
-                    language: {
-                      type: "string",
-                      description: "The programming language id, one of: javascript, typescript, python, java, cpp, go, rust."
-                    }
-                  },
-                  required: ["code", "language"]
+                    required: ["text"]
+                  }
+                },
+                {
+                  name: "set_editor_code",
+                  description: "Call this tool to load starter code into the candidate's code editor. Use ONLY for debug or optimize tasks, not for implement-from-scratch tasks.",
+                  parameters: {
+                    type: "object",
+                    properties: {
+                      code: {
+                        type: "string",
+                        description: "The starter code to place in the editor."
+                      },
+                      language: {
+                        type: "string",
+                        description: "The programming language id, one of: javascript, typescript, python, java, cpp, go, rust."
+                      }
+                    },
+                    required: ["code", "language"]
+                  }
+                },
+                {
+                  name: "end_phase",
+                  description: "Call this tool to end the current interview phase and move to the next one.",
+                  parameters: { type: "object", properties: {} }
+                },
+                {
+                  name: "end_session",
+                  description: "Call this tool to hang up the call and completely end the interview session.",
+                  parameters: { type: "object", properties: {} }
                 }
-              },
-              {
-                name: "open_crm_editor",
-                description: "Call this tool to open the Mock CRM / Email Follow-Up interface for the candidate. Use this ONLY during the email-followup stage.",
-                parameters: {
-                  type: "object",
-                  properties: {}
-                }
-              },
-              {
-                name: "open_presentation",
-                description: "Call this tool to open the Pitch Deck presentation viewer for the candidate. Use this ONLY during the presentation stage.",
-                parameters: {
-                  type: "object",
-                  properties: {}
-                }
+              ];
+
+              if (systemInstructions.includes('[CRM EDITOR TOOL]')) {
+                tools.push({
+                  name: "open_crm_editor",
+                  description: "Call this tool to open the Mock CRM / Email Follow-Up interface. CRITICAL: Use this ONLY if the current phase instructions explicitly tell you to conduct an email follow-up. Do NOT call this during Roleplay.",
+                  parameters: { type: "object", properties: {} }
+                });
               }
-            ]
+
+              if (systemInstructions.includes('[PRESENTATION DECK TOOL]')) {
+                tools.push({
+                  name: "open_presentation",
+                  description: "Call this tool to open the Pitch Deck presentation viewer. CRITICAL: Use this ONLY if the current phase instructions explicitly tell you to conduct a Pitch Deck Presentation. Do NOT call this during Roleplay or standard interviews.",
+                  parameters: { type: "object", properties: {} }
+                });
+              }
+
+              if (systemInstructions.includes('trigger_promotion')) {
+                tools.push({
+                  name: "trigger_gatekeeper",
+                  description: "Call this tool IMMEDIATELY when the candidate says they are ready and you start acting as the Gatekeeper/Receptionist.",
+                  parameters: { type: "object", properties: {} }
+                });
+                tools.push({
+                  name: "trigger_promotion",
+                  description: "Call this tool when the candidate successfully passes the Gatekeeper. This promotes them to the Decision Maker.",
+                  parameters: { type: "object", properties: {} }
+                });
+                tools.push({
+                  name: "trigger_rejection",
+                  description: "Call this tool when the candidate fails to convince the Gatekeeper. This switches you into Coach mode.",
+                  parameters: { type: "object", properties: {} }
+                });
+                tools.push({
+                  name: "trigger_retry",
+                  description: "Call this tool when the candidate says they are ready to retry the Gatekeeper call.",
+                  parameters: { type: "object", properties: {} }
+                });
+              }
+
+              return tools;
+            })()
           }],
           outputAudioTranscription: { },
           inputAudioTranscription: { },
@@ -234,6 +278,18 @@ export class GeminiLiveService {
         this.onOpenCRM?.();
       } else if (fc?.name === 'open_presentation') {
         this.onOpenPresentation?.();
+      } else if (fc?.name === 'trigger_gatekeeper') {
+        this.onGatekeeper?.();
+      } else if (fc?.name === 'trigger_promotion') {
+        this.onPromotion?.();
+      } else if (fc?.name === 'trigger_rejection') {
+        this.onRejection?.();
+      } else if (fc?.name === 'trigger_retry') {
+        this.onRetry?.();
+      } else if (fc?.name === 'end_phase') {
+        this.onEndPhase?.();
+      } else if (fc?.name === 'end_session') {
+        this.onEndSession?.();
       }
       // Always acknowledge so the model doesn't stall waiting for a function result.
       responses.push({ id: fc?.id, name: fc?.name, response: { result: 'ok' } });
@@ -394,6 +450,22 @@ export class GeminiLiveService {
       };
       this.ws.send(JSON.stringify(msg));
     }
+  }
+
+  sendHoldSilence() {
+    this.sendText(`[SYSTEM INJECTION: You are putting the candidate on hold to transfer them. Say exactly "Please hold." and then IMMEDIATELY END YOUR TURN and remain completely silent. Do not speak again until the next system injection.]`);
+  }
+
+  sendRoleplayPromotion() {
+    this.sendText(`[SYSTEM INJECTION: The hold transfer is complete. You are now the Decision Maker. Drop the Gatekeeper persona. Act with a very heavy, deep, authoritative, and impatient tone. Speak slowly and confidently. Start by saying something like: "Yeah, who is this?"]`);
+  }
+
+  sendRoleplayRejection() {
+    this.sendText(`[SYSTEM INJECTION: The candidate failed the gatekeeper. Drop character and become the Interviewer/Coach. Give them one specific, actionable critique, then ask if they want to try again.]`);
+  }
+
+  sendRoleplayRetry() {
+    this.sendText(`[SYSTEM INJECTION: The candidate is ready to retry. You are now the Gatekeeper again. Start the phone call.]`);
   }
 
   disconnect() {

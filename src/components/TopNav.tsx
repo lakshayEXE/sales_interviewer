@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Network, Mic2, Building2, Link2, Sparkles, UserCog } from 'lucide-react';
+import { LayoutDashboard, Network, Mic2, Building2, Link2, UserCog } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SettingsModal } from './SettingsModal';
 import { useInterviewStore } from '../store/useInterviewStore';

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { PhoneCall, LogOut, Loader2, User, Code2, AlertTriangle, Maximize, Circle, Eye, EyeOff, Bot } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { startRinging, stopRinging, playTransferBeep, playHangupTone, startHoldMusic, stopHoldMusic } from '../utils/phoneAudio';
 import { TranscriptSidebar } from '../components/TranscriptSidebar';
 import { Visualizer } from '../components/Visualizer';
 import { CodeEditor } from '../components/CodeEditor';
@@ -121,6 +122,8 @@ export const Interviewer: React.FC = () => {
   // Starter code the model loads into the editor via the set_editor_code tool (debug/optimize).
   const [injectedCode, setInjectedCode] = useState<string | undefined>(undefined);
   const [injectedLanguage, setInjectedLanguage] = useState<string | undefined>(undefined);
+  
+  const [roleplayState, setRoleplayState] = useState<'manager' | 'coach' | 'ceo' | 'hold' | 'gatekeeper' | null>(null);
 
   const audioRecorderRef = useRef<AudioRecorder | null>(null);
   const audioPlayerRef = useRef<AudioPlayer | null>(null);
@@ -328,8 +331,13 @@ export const Interviewer: React.FC = () => {
 
       geminiServiceRef.current.onConnectionStateChange = (connected) => {
         setIsConnected(connected);
-        if (connected) toast.success('Connected to Gemini Live API');
-        else toast.error('Disconnected');
+        if (connected) {
+          toast.success('Connected to Gemini Live API');
+          stopRinging();
+        } else {
+          toast.error('Disconnected');
+          stopRinging();
+        }
       };
 
       geminiServiceRef.current.onAudioData = (base64) => {
@@ -349,6 +357,7 @@ export const Interviewer: React.FC = () => {
 
       geminiServiceRef.current.onQuestion = (question) => {
         setToolQuestion(question);
+        setRoleplayState(null);
       };
 
       geminiServiceRef.current.onEditorCode = (code, language) => {
@@ -372,9 +381,49 @@ export const Interviewer: React.FC = () => {
         setShowCRMEditor(false);
         setShowCodeEditor(false);
       };
+
+      geminiServiceRef.current.onGatekeeper = () => {
+        setRoleplayState('gatekeeper');
+      };
+
+      geminiServiceRef.current.onPromotion = () => {
+        setRoleplayState('hold');
+        playTransferBeep();
+        geminiServiceRef.current?.sendHoldSilence();
+        startHoldMusic();
+        
+        setTimeout(() => {
+          stopHoldMusic();
+          if (!geminiServiceRef.current) return;
+          setRoleplayState('ceo');
+          playTransferBeep();
+          geminiServiceRef.current?.sendRoleplayPromotion();
+        }, 8000);
+      };
+
+      geminiServiceRef.current.onRejection = () => {
+        setRoleplayState('coach');
+        playTransferBeep();
+        geminiServiceRef.current?.sendRoleplayRejection();
+      };
+
+      geminiServiceRef.current.onRetry = () => {
+        setRoleplayState('manager');
+        playTransferBeep();
+        geminiServiceRef.current?.sendRoleplayRetry();
+      };
+
+      geminiServiceRef.current.onEndPhase = () => {
+        setRoleplayState(null);
+      };
+
+      geminiServiceRef.current.onEndSession = () => {
+        endCall();
+      };
     }
 
     return () => {
+      stopRinging();
       audioRecorderRef.current?.stop();
       audioPlayerRef.current?.stop();
       geminiServiceRef.current?.disconnect();
@@ -429,6 +478,9 @@ export const Interviewer: React.FC = () => {
         geminiServiceRef.current?.sendAudio(base64);
       });
 
+      // Crucial: AudioContext must be resumed synchronously in the click handler
+      startRinging();
+
       await audioRecorderRef.current.start();
       setIsRecording(true);
       setSessionActive(true);
@@ -444,6 +496,7 @@ export const Interviewer: React.FC = () => {
       setToolQuestion('');
       setInjectedCode(undefined);
       setInjectedLanguage(undefined);
+      setRoleplayState(null);
       setSessionNodes(activeNodes);
       geminiServiceRef.current.connect(systemPrompt, {
         voiceName: session.config.voiceName,
@@ -463,6 +516,11 @@ export const Interviewer: React.FC = () => {
   };
 
   const endCall = () => {
+    if (isRecording || isConnected) {
+      playHangupTone();
+      stopRinging();
+      stopHoldMusic();
+    }
     if (isRecording) {
       audioRecorderRef.current?.stop();
       audioPlayerRef.current?.stop();
@@ -627,6 +685,30 @@ export const Interviewer: React.FC = () => {
                 </span>
                 {isConnected ? 'Live' : isRecording ? 'Connecting' : 'Offline'}
               </div>
+
+              <AnimatePresence mode="wait">
+                {roleplayState && (
+                  <motion.div
+                    key={roleplayState}
+                    initial={{ opacity: 0, scale: 0.8, y: -10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.8, y: 10 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                    className={`hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-[0.14em] border shrink-0 shadow-lg ${
+                      roleplayState === 'ceo' ? 'bg-green-500/15 text-green-400 border-green-500/30 shadow-[0_0_20px_rgba(34,197,94,0.3)]' :
+                      roleplayState === 'hold' ? 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30 shadow-[0_0_20px_rgba(234,179,8,0.3)] animate-pulse' :
+                      roleplayState === 'gatekeeper' ? 'bg-purple-500/15 text-purple-400 border-purple-500/30 shadow-[0_0_20px_rgba(168,85,247,0.3)]' :
+                      roleplayState === 'coach' ? 'bg-blue-500/15 text-blue-400 border-blue-500/30 shadow-[0_0_20px_rgba(59,130,246,0.3)]' :
+                      'bg-amber-500/15 text-amber-400 border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.3)]'
+                    }`}
+                  >
+                    <span className="text-sm">
+                      {roleplayState === 'ceo' ? '👑' : roleplayState === 'hold' ? '⏳' : roleplayState === 'gatekeeper' ? '📞' : roleplayState === 'coach' ? '🎓' : '🛡️'}
+                    </span>
+                    {roleplayState === 'ceo' ? 'The CEO' : roleplayState === 'hold' ? 'On Hold...' : roleplayState === 'gatekeeper' ? 'Receptionist' : roleplayState === 'coach' ? 'Coach' : 'The Manager'}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               <div className="shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-primary/25 to-accent/25 border border-white/10 flex items-center justify-center text-sm font-bold text-white shadow-inner">
                 {(candidateName || 'C').charAt(0).toUpperCase()}

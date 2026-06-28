@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Send, FileText, Mail, Building2, User, Clock } from 'lucide-react';
+import { Send, FileText, Building2, User, Clock } from 'lucide-react';
 import { useInterviewStore } from '../store/useInterviewStore';
 
 interface MockCRMProps {
@@ -13,7 +13,6 @@ export const MockCRM: React.FC<MockCRMProps> = ({ onCRMChange, onSubmitEmail, ti
   const setCRMNotes = useInterviewStore(state => state.setCRMNotes);
   const emailDraft = useInterviewStore(state => state.emailDraft);
   const setEmailDraft = useInterviewStore(state => state.setEmailDraft);
-  const companyInfo = useInterviewStore(state => state.companyInfo);
 
   const [timeLeft, setTimeLeft] = useState(timeLimitMinutes * 60);
   const [submitted, setSubmitted] = useState(false);

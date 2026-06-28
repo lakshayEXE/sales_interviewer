@@ -4,7 +4,7 @@ import { X, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Card } from '../ui/Card';
 import type { FlowNodeData } from '../../types/flow';
-import { FUNDAMENTALS_SUBJECTS, DSA_TOPICS, BEHAVIORAL_AREAS, NODE_CATEGORIES } from '../../types/flow';
+import { NODE_CATEGORIES } from '../../types/flow';
 
 interface NodeConfigPanelProps {
   node: Node;
@@ -12,35 +12,6 @@ interface NodeConfigPanelProps {
   onDelete: (id: string) => void;
   onClose: () => void;
 }
-
-const TagSelector: React.FC<{
-  label: string;
-  options: string[];
-  selected: string[];
-  onChange: (val: string[]) => void;
-}> = ({ label, options, selected, onChange }) => (
-  <div>
-    <label className="block text-sm font-semibold text-textMuted mb-2">{label}</label>
-    <div className="flex flex-wrap gap-1.5">
-      {options.map(opt => {
-        const isSelected = selected.includes(opt);
-        return (
-          <button
-            key={opt}
-            onClick={() => onChange(isSelected ? selected.filter(s => s !== opt) : [...selected, opt])}
-            className={`px-2.5 py-1 text-xs rounded-md border transition-all ${
-              isSelected
-                ? 'bg-primary/20 border-primary text-primary font-medium'
-                : 'bg-background border-gray-700 text-textMuted hover:border-gray-500'
-            }`}
-          >
-            {opt}
-          </button>
-        );
-      })}
-    </div>
-  </div>
-);
 
 const SelectField: React.FC<{
   label: string;
@@ -129,17 +100,7 @@ function CategoryFields({ data, onUpdate, nodeId }: { data: FlowNodeData; onUpda
 
     case 'roleplay':
       return (
-        <>
-          <div>
-            <label className="block text-sm font-semibold text-textMuted mb-2">Buyer Persona</label>
-            <input
-              type="text"
-              value={data.buyerPersona}
-              onChange={e => onUpdate(nodeId, { buyerPersona: e.target.value } as any)}
-              className="w-full bg-background border border-gray-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
-              placeholder="e.g. Busy e-commerce owner"
-            />
-          </div>
+        <div className="space-y-4">
           <div>
             <label className="block text-sm font-semibold text-textMuted mb-2">Scenario Context</label>
             <textarea
@@ -149,7 +110,49 @@ function CategoryFields({ data, onUpdate, nodeId }: { data: FlowNodeData; onUpda
               placeholder="e.g. Cold calling them for payment plans"
             />
           </div>
-        </>
+          <div className="pt-2 border-t border-gray-800">
+            <ToggleField
+              label="Enable Gatekeeper & Coaching Loop"
+              checked={!!data.hasGatekeeper}
+              onChange={v => onUpdate(nodeId, { hasGatekeeper: v } as any)}
+            />
+          </div>
+          {data.hasGatekeeper ? (
+            <>
+              <div>
+                <label className="block text-sm font-semibold text-textMuted mb-2">Gatekeeper Persona</label>
+                <input
+                  type="text"
+                  value={data.gatekeeperPersona || ''}
+                  onChange={e => onUpdate(nodeId, { gatekeeperPersona: e.target.value } as any)}
+                  className="w-full bg-background border border-gray-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
+                  placeholder="e.g. Strict Executive Assistant"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-textMuted mb-2">Decision Maker Persona</label>
+                <input
+                  type="text"
+                  value={data.decisionMakerPersona || ''}
+                  onChange={e => onUpdate(nodeId, { decisionMakerPersona: e.target.value } as any)}
+                  className="w-full bg-background border border-gray-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
+                  placeholder="e.g. Busy CEO"
+                />
+              </div>
+            </>
+          ) : (
+            <div>
+              <label className="block text-sm font-semibold text-textMuted mb-2">Buyer Persona</label>
+              <input
+                type="text"
+                value={data.buyerPersona}
+                onChange={e => onUpdate(nodeId, { buyerPersona: e.target.value } as any)}
+                className="w-full bg-background border border-gray-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
+                placeholder="e.g. Busy e-commerce owner"
+              />
+            </div>
+          )}
+        </div>
       );
 
     case 'objection-handling':
@@ -275,6 +278,54 @@ function CategoryFields({ data, onUpdate, nodeId }: { data: FlowNodeData; onUpda
           <p className="text-xs text-textMuted mt-2">
             The candidate will have this much time to review the 3-slide deck before presenting.
           </p>
+        </div>
+      );
+
+    case 'negotiation':
+      return (
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-textMuted mb-2">Buyer Persona</label>
+            <input
+              type="text"
+              value={data.buyerPersona}
+              onChange={e => onUpdate(nodeId, { buyerPersona: e.target.value } as any)}
+              className="w-full bg-background border border-gray-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
+              placeholder="e.g. Aggressive Procurement Officer"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-textMuted mb-2">Product Name</label>
+            <input
+              type="text"
+              value={data.productName}
+              onChange={e => onUpdate(nodeId, { productName: e.target.value } as any)}
+              className="w-full bg-background border border-gray-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
+              placeholder="e.g. Enterprise License"
+            />
+          </div>
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <label className="block text-sm font-semibold text-textMuted mb-2">Target Price</label>
+              <input
+                type="text"
+                value={data.targetPrice}
+                onChange={e => onUpdate(nodeId, { targetPrice: e.target.value } as any)}
+                className="w-full bg-background border border-gray-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
+                placeholder="e.g. $50,000"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block text-sm font-semibold text-textMuted mb-2">Floor Price</label>
+              <input
+                type="text"
+                value={data.floorPrice}
+                onChange={e => onUpdate(nodeId, { floorPrice: e.target.value } as any)}
+                className="w-full bg-background border border-gray-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
+                placeholder="e.g. $40,000"
+              />
+            </div>
+          </div>
         </div>
       );
 

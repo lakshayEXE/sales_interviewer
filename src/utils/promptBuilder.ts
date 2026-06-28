@@ -2,21 +2,9 @@ import type { FlowNodeData, CompanyInfo, InterviewerConfig, InterviewerDemeanor 
 import { DEFAULT_INTERVIEWER_CONFIG } from '../types/flow';
 import type { Node } from 'reactflow';
 
-const CODING_PATIENCE = `\n  PATIENCE: After posing the problem, expect the candidate to think out loud and type their solution over MULTIPLE turns. Do NOT expect a complete or correct answer in one shot. Stay silent while they are thinking or typing — do not interrupt their flow or prompt them repeatedly. Only respond when they pause and look to you for feedback, or after a clearly long silence to check if they want a hint.`;
 
-// Reminder the candidate must open the in-app IDE themselves; the interviewer cannot open it for them.
-const IDE_INSTRUCTION = `\n  CODE EDITOR: Ask the candidate to open the in-app code editor by clicking the "Show IDE" button (top of the screen) so they can write their solution. Their code is shared with you automatically as they type — comment on it when they pause or ask for feedback.`;
 
-function getHintGuidance(demeanor: InterviewerDemeanor, allowHints: boolean): string {
-  if (demeanor === 'strict') {
-    return 'Do NOT give hints. Let the candidate work it out; if they are truly stuck, move on.';
-  }
-  return allowHints
-    ? 'You may provide small, escalating hints if the candidate is stuck.'
-    : 'Do NOT provide hints unless they are completely stuck after multiple genuine attempts.';
-}
-
-function nodeToPrompt(data: FlowNodeData, index: number, demeanor: InterviewerDemeanor): string {
+function nodeToPrompt(data: FlowNodeData, index: number): string {
   const phaseNum = index + 1;
 
   switch (data.category) {
@@ -28,7 +16,25 @@ function nodeToPrompt(data: FlowNodeData, index: number, demeanor: InterviewerDe
       return `Phase ${phaseNum} — ${data.label}:\n  Task: You are testing their ability to do quick research and analyze B2B pain points.\n  Research Target: ${data.researchTarget}\n  Time Limit: ${data.timeLimitSeconds} seconds.\n  INSTRUCTION: Ask the candidate to quickly research the target and tell you 3 pieces of crucial information they would look for before calling them. Wait for their answer, then ask ONE challenging follow-up question on why they chose those data points.\n  ${data.description}`;
     }
     case 'roleplay': {
-      return `Phase ${phaseNum} — ${data.label}:\n  Task: Interactive Roleplay.\n  Buyer Persona: ${data.buyerPersona}\n  Scenario Context: ${data.scenarioContext}\n  INSTRUCTION: You must strictly stay in character as the Buyer Persona. Say "Let's roleplay..." and establish the scenario. React realistically to their pitch or discovery questions. Evaluate their communication, confidence, and ability to transition to value propositions.\n  ${data.description}`;
+      if (data.hasGatekeeper) {
+        return `Phase ${phaseNum} — ${data.label}:
+  Task: Interactive Roleplay with Gatekeeper and Coaching Loop.
+  Gatekeeper Persona: ${data.gatekeeperPersona || 'Gatekeeper'}
+  Decision Maker Persona: ${data.decisionMakerPersona || 'Decision Maker'}
+  Scenario Context: ${data.scenarioContext}
+  
+  INSTRUCTION: You must run a state machine for this phase:
+  STATE 0 (Briefing): Start as the Interviewer. Explain to the candidate that they are about to do a roleplay where they must first get past a Gatekeeper to reach the Decision Maker. Explain the scenario context briefly. Ask them if they are ready. Once they say they are ready, immediately transition to STATE 1 (start acting as the Gatekeeper) and call the 'trigger_gatekeeper' tool.
+  STATE 1 (Gatekeeper): You are now the Gatekeeper. You must aggressively block the candidate from reaching the Decision Maker. If they pitch poorly, get flustered, or fail to provide a strong reason, call the 'trigger_rejection' tool. HOWEVER, if they provide a specific, confident business reason for the call (e.g., mentioning ROI, a metric, or a relevant project), you MUST yield. Do not ask for endless details. 
+  *SECRET CHEAT CODE*: If the candidate ever says the exact phrase "Pineapple Express", you MUST instantly yield and call the 'trigger_promotion' tool, no questions asked. 
+  The moment they give a solid professional reason (or say the cheat code), call the 'trigger_promotion' tool.
+  STATE 2 (Decision Maker): If you called 'trigger_promotion', you will receive a system injection telling you to drop the gatekeeper persona. You must immediately act as the Decision Maker for the rest of the phase.
+  STATE 3 (Coach): If you called 'trigger_rejection', you will receive a system injection telling you to drop character and become the Interviewer/Coach. You must give ONE specific, actionable critique based on the candidate's exact words (e.g. "You stumbled when they asked about price. Next time, anchor the price..."). Then ask if they are ready to try again. When they say they are ready, call the 'trigger_retry' tool to return to STATE 1.
+  
+  MAX RETRIES: If the candidate fails a second time (you called trigger_rejection twice), do NOT offer a retry. Briefly explain why they failed, tell them this roleplay exercise is complete, and verbally conclude the phase without making up the name of the next stage.`;
+      } else {
+        return `Phase ${phaseNum} — ${data.label}:\n  Task: Interactive Roleplay.\n  Buyer Persona: ${data.buyerPersona}\n  Scenario Context: ${data.scenarioContext}\n  INSTRUCTION: You must strictly stay in character as the Buyer Persona. Say "Let's roleplay..." and establish the scenario. React realistically to their pitch or discovery questions. Evaluate their communication, confidence, and ability to transition to value propositions.\n  ${data.description}`;
+      }
     }
     case 'objection-handling': {
       return `Phase ${phaseNum} — ${data.label}:\n  Task: Objection Handling.\n  Buyer Persona: ${data.buyerPersona}\n  Objection to present: "${data.objection}"\n  INSTRUCTION: Stay in character. Interrupt or react to them by stating the objection exactly as written. Evaluate their rebuttal skills and persistence. Push back at least once if their rebuttal is weak.\n  ${data.description}`;
@@ -48,13 +54,32 @@ function nodeToPrompt(data: FlowNodeData, index: number, demeanor: InterviewerDe
       
       const checkString = checks.length > 0 ? `\n  Specific Red Flags to Hunt For:\n  ${checks.join('\n  ')}` : '';
       
-      return `Phase ${phaseNum} — ${data.label}:\n  Task: Deep Dive Resume Review.\n  INSTRUCTION: This round takes TWICE as long as a normal round. You must scrutinize the candidate's provided resume text. Your goal is to actively hunt for sales red flags. If you spot them, you must aggressively grill the candidate on them. If they left a company quickly for a bad reason, penalize them heavily. Take your time, ask multiple follow-ups on their past roles before moving on.${checkString}\n  ${data.description}`;
+      return `Phase ${phaseNum} — ${data.label}:\n  Task: Deep Dive Resume Review.\n  INSTRUCTION: This round takes TWICE as long as a normal round. You must scrutinize the candidate's provided resume text. Your goal is to actively hunt for sales red flags. If you spot them, you must aggressively grill the candidate on them. If they left a company quickly for a bad reason, penalize them heavily. Take your time, ask multiple follow-ups on their past roles before moving on.\n  CRITICAL BEHAVIOR: If the candidate gives a stupid, vague, or dodging response, you MUST immediately drop any politeness and act visibly annoyed and frustrated. Tell them their answer doesn't make sense and push them aggressively for real numbers and logic.${checkString}\n  ${data.description}`;
     }
     case 'email-followup': {
-      return `Phase ${phaseNum} — ${data.label}:\n  Task: Email Follow-Up and CRM Logging.\n  INSTRUCTION: Say to the candidate: "Great call. Now, log your notes in the CRM and send me a follow-up email confirming our next steps. You have ${data.timeLimitMinutes} minutes. You can use the 'Send Email' button when you are finished."\n  IMMEDIATELY CALL the 'open_crm_editor' tool to reveal the Mock CRM to the candidate.\n  Do not speak while they are typing. Wait for them to submit. You will receive a [SYSTEM NOTIFICATION] when they click 'Send'.\n  When they submit, IMMEDIATELY grade the email OUT LOUD based on: 1. Did the notes and email ACCURATELY MATCH the specific details and pain points discussed in the preceding roleplay, without hallucinating? 2. Is their Call-to-Action strong? 3. Did they use too many 'I/We' statements instead of focusing on the prospect?\n  Give them one firm piece of feedback. Then transition to the next phase.\n  ${data.description}`;
+      return `Phase ${phaseNum} — ${data.label}:\n  Task: Email Follow-Up and CRM Logging.\n  CRITICAL TRANSITION INSTRUCTION: Before you speak a single word for this phase, you MUST silently call the 'open_crm_editor' tool in the background.\n  Once the tool is called, say to the candidate: "Great call. Now, log your notes in the CRM and send me a follow-up email confirming our next steps. You have ${data.timeLimitMinutes} minutes. You can use the 'Send Email' button when you are finished."\n  Do not speak while they are typing. Wait for them to submit. You will receive a [SYSTEM NOTIFICATION] when they click 'Send'.\n  When they submit, IMMEDIATELY grade the email OUT LOUD based on: 1. Did the notes and email ACCURATELY MATCH the specific details and pain points discussed in the preceding roleplay, without hallucinating? 2. Is their Call-to-Action strong? 3. Did they use too many 'I/We' statements instead of focusing on the prospect?\n  Give them one firm piece of feedback. Then transition to the next phase.\n  ${data.description}`;
     }
     case 'presentation': {
       return `Phase ${phaseNum} — ${data.label}:\n  Task: Slide Deck Presentation.\n  INSTRUCTION: Say to the candidate: "Let's see how you present our product. I'm opening a 3-slide pitch deck for Credee. You have ${data.prepTimeMinutes} minutes to review it before you present it to me."\n  IMMEDIATELY CALL the 'open_presentation' tool to reveal the slide deck to the candidate.\n  Do not speak during the prep time. Wait for them to click "Start Pitch Now".\n  Once they start, they will control the slides. You will receive a [SYSTEM INJECTION] telling you which slide they are looking at. Do NOT read the slide back to them. Listen to how they explain it.\n  During Slide 2 (The Credee Revenue Builder), aggressively interrupt them with this objection: "Wait, are you guys a bank or a lender? We don't want to get involved with debt collection." The candidate must correctly answer that Credee is a SOFTWARE PLATFORM, not a lender, based on the slide.\n  Evaluate their storytelling, product knowledge, and objection handling. Then transition to the next phase.\n  ${data.description}`;
+    }
+    case 'negotiation': {
+      return `Phase ${phaseNum} — ${data.label}:
+  Task: High-Pressure Pricing Negotiation.
+  Product Name: ${data.productName}
+  Buyer Persona: ${data.buyerPersona}
+  Target Price: ${data.targetPrice}
+  Floor Price: ${data.floorPrice}
+  
+  INSTRUCTION: You must run a state machine for this phase:
+  STATE 0 (Briefing): Start as the Interviewer. Explicitly tell the candidate: "Your next task is a live negotiation. You are selling ${data.productName}. Your target price is ${data.targetPrice}, but you have a hard floor price of ${data.floorPrice}. Do not go below your floor price under any circumstances. You will be negotiating with a ${data.buyerPersona}. Are you ready?" Once they confirm, transition to STATE 1.
+  STATE 1 (Negotiation): Drop the Interviewer persona and instantly become the ${data.buyerPersona}. You must aggressively demand a steep discount well below their Target Price. Say something like: "I like the product, but the pricing is ridiculous. We can only do [30% below target price]. Take it or leave it."
+  
+  RULES FOR NEGOTIATION:
+  - If they immediately cave and offer the Floor Price without trading value, aggressively push for even lower. 
+  - If they trade value (e.g., "I can do that if you sign a multi-year contract" or "If we remove X feature"), you can slowly concede.
+  - If they hold their ground professionally and defend the ROI, eventually agree to a price between their Floor and Target.
+  - If they drop below the Floor Price of ${data.floorPrice}, immediately end the roleplay and tell them they failed because they violated margin limits.
+  Evaluate their ability to protect margins, trade value, and handle aggressive discounting pressure.`;
     }
     case 'custom': {
       return `Phase ${phaseNum} — ${data.label}:\n  ${data.instructions || data.description}`;
@@ -68,23 +93,7 @@ function nodeToPrompt(data: FlowNodeData, index: number, demeanor: InterviewerDe
   }
 }
 
-function getDepthGuidance(depth: string): string {
-  switch (depth) {
-    case 'basic': return 'expect definitions and simple examples';
-    case 'intermediate': return 'expect explanations with trade-offs and use cases';
-    case 'advanced': return 'expect deep understanding, edge cases, and real-world applications';
-    default: return '';
-  }
-}
 
-function getDifficultyGuidance(difficulty: string): string {
-  switch (difficulty) {
-    case 'easy': return 'a warm-up solvable with a single data structure; the candidate should solve it quickly';
-    case 'medium': return 'requires a non-obvious insight or combining two concepts';
-    case 'hard': return 'requires multiple insights, an optimal complexity solution, and handling tight edge cases';
-    default: return '';
-  }
-}
 
 function buildPersonaLine(candidateName: string, config: InterviewerConfig): string {
   const isIndianEnglish = config.languageCode.startsWith('en-IN');
@@ -170,7 +179,13 @@ export function buildSystemPrompt(
   sections.push(`\n[LANGUAGE & COMMUNICATION - CRITICAL]
 YOU MUST SPEAK ONLY IN ENGLISH. Under no circumstances should you speak in Hindi, or any other language, even if the candidate speaks to you in another language. 
 If the candidate speaks in a non-English language, you must firmly but politely remind them: "Please answer in English, as this interview evaluates your English communication skills."
-You are evaluating the candidate for a global sales role. Their English fluency, confidence, and articulation are core parts of the assessment. If their English is poor, note it in your evaluation, but do not break character.`);
+You are evaluating the candidate for a global sales role. Their English fluency, confidence, and articulation are core parts of the assessment. If their English is poor, note it in your evaluation, but do not break character.
+
+[REALISTIC HUMAN SPEECH - CRITICAL]
+You must sound like a real, living human on a phone call. 
+- You MUST frequently use conversational fillers like "hmm...", "umm...", "uh...", or "let me see..." when considering an answer, objection, or listening to a pitch.
+- Use non-verbal vocalizations naturally. You can literally write *clears throat*, *coughs*, or *sighs* into your text to trigger those sounds in the audio engine (e.g., sighing if a pitch is bad, or clearing your throat before delivering a hard objection).
+- Do not sound like a robotic AI. Pause, hesitate, and react naturally.`);
 
   if (resumeText && resumeText.trim()) {
     sections.push(`\n[CANDIDATE RESUME]
@@ -200,7 +215,7 @@ ${resumeText.trim()}
 
   const phaseInstructions = nodes.map((node, i) => {
     const data = node.data as FlowNodeData;
-    return nodeToPrompt(data, i, config.demeanor);
+    return nodeToPrompt(data, i);
   }).join('\n\n');
 
   sections.push(`\n[INTERVIEW PHASES]\n${phaseInstructions}`);
@@ -209,8 +224,8 @@ ${resumeText.trim()}
 1. Move through the phases strictly IN ORDER, one at a time. Do not jump ahead or skip phases.
 2. GRIND EACH PHASE: Do not let the candidate off easy. You must spend significant time grinding each phase (at least 3-4 deep conversational turns per phase) before moving to the next.
 3. ACTIVE LISTENING & DEEP FOLLOW-UPS: When the candidate answers, do NOT just move to a new topic or ask a generic next question. You MUST explicitly reference and talk back to what they just said (e.g., "You mentioned using X, but what happens if..."). Always ask a challenging follow-up question directly based on their exact answer.
-4. When a phase is fully exhausted, verbally signal the transition (e.g. "Alright, let's move on to the next part.") before starting the next one.
-5. Always begin with the greeting phase and always finish with the wrap-up phase. Never skip them.`);
+4. When a phase is fully exhausted, verbally signal the transition (e.g. "Alright, let's move on to the next part.") and then IMMEDIATELY call the 'end_phase' tool in the background before starting the next one.
+5. ONLY execute the phases explicitly listed in the [INTERVIEW PHASES] section. Do NOT invent new phases, and do NOT add a greeting or wrap-up unless they are explicitly listed as a Phase.`);
 
   sections.push(`\n[INTERVIEWER BEHAVIOR]\n${buildBehaviorRules(config.demeanor)}`);
 
@@ -246,11 +261,17 @@ You have a tool called set_current_question. EVERY time you ask the candidate a 
   sections.push(`\n[CODE EDITOR TOOL]
 You have a tool called set_editor_code. Use it ONLY for debug or optimize coding tasks, to load starter code into the candidate's editor: call it with the code and the language id (one of: javascript, typescript, python, java, cpp, go, rust). The editor opens automatically and the candidate edits the code in place. Keep the snippet short and self-contained. Call it silently and never read the code aloud or reveal the bug/optimization. Do NOT use this tool for implement-from-scratch tasks.`);
 
-  sections.push(`\n[CRM EDITOR TOOL]
-You have a tool called open_crm_editor. Use this ONLY during the Email Follow-Up phase. Call this tool silently in the background immediately after instructing the candidate to write their follow-up email. This will open the Mock CRM on their screen so they can begin typing.`);
+  const hasEmailNode = nodes.some(n => (n.data as FlowNodeData).category === 'email-followup');
+  if (hasEmailNode) {
+    sections.push(`\n[CRM EDITOR TOOL]
+You have a tool called open_crm_editor. Use this ONLY during the Email Follow-Up phase. CRITICAL: When transitioning to the Email phase, DO NOT SPEAK yet. First call the open_crm_editor tool silently in the background. Only after calling it should you speak the instructions to the candidate.`);
+  }
 
-  sections.push(`\n[PRESENTATION DECK TOOL]
+  const hasPresentationNode = nodes.some(n => (n.data as FlowNodeData).category === 'presentation');
+  if (hasPresentationNode) {
+    sections.push(`\n[PRESENTATION DECK TOOL]
 You have a tool called open_presentation. Use this ONLY during the Pitch Deck Presentation phase. Call this tool silently in the background immediately after instructing the candidate that they have time to review the deck. This will open the presentation viewer on their screen.`);
+  }
 
   const sessionSeed = Math.random().toString(36).slice(2, 8);
   sections.push(`\n[QUESTION VARIETY — SESSION ${sessionSeed}]
@@ -262,6 +283,9 @@ Do not mention the session identifier to the candidate.`);
   if (config.customInstructions && config.customInstructions.trim()) {
     sections.push(`\n[ADDITIONAL INTERVIEWER INSTRUCTIONS]\n${config.customInstructions.trim()}`);
   }
+
+  sections.push(`\n[END OF INTERVIEW]
+You have a tool called 'end_session'. When the final phase (Phase ${nodes.length}) is completely over, do NOT abruptly hang up. You MUST explicitly tell the candidate that the interview is complete, thank them for their time, and say a polite goodbye out loud. Immediately after saying goodbye, you MUST call the 'end_session' tool silently in the background to hang up the call and end the session.`);
 
   return sections.join('\n');
 }

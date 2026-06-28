@@ -8,6 +8,7 @@ export type NodeCategory =
   | 'resume-review'
   | 'email-followup'
   | 'presentation'
+  | 'negotiation'
   | 'custom'
   | 'wrapup';
 
@@ -33,6 +34,9 @@ export interface RoleplayNodeData extends BaseNodeData {
   category: 'roleplay';
   buyerPersona: string;
   scenarioContext: string;
+  hasGatekeeper?: boolean;
+  gatekeeperPersona?: string;
+  decisionMakerPersona?: string;
 }
 
 export interface ObjectionHandlingNodeData extends BaseNodeData {
@@ -70,6 +74,14 @@ export interface PresentationNodeData extends BaseNodeData {
   prepTimeMinutes: number;
 }
 
+export interface NegotiationNodeData extends BaseNodeData {
+  category: 'negotiation';
+  buyerPersona: string;
+  productName: string;
+  targetPrice: string;
+  floorPrice: string;
+}
+
 export interface CustomNodeData extends BaseNodeData {
   category: 'custom';
   instructions: string;
@@ -90,6 +102,7 @@ export type FlowNodeData =
   | ResumeReviewNodeData
   | EmailFollowupNodeData
   | PresentationNodeData
+  | NegotiationNodeData
   | CustomNodeData
   | WrapupNodeData;
 
@@ -191,7 +204,7 @@ export interface NodeCategoryMeta {
   icon: string;
   shortDesc?: string;
   color: string;
-  group: 'start-end' | 'technical' | 'soft-skills' | 'other';
+  group: 'start-end' | 'technical' | 'soft-skills' | 'other' | 'sales';
   defaultData: FlowNodeData;
 }
 
@@ -256,6 +269,9 @@ export const NODE_CATEGORIES: NodeCategoryMeta[] = [
       description: 'Interactive cold call simulation',
       buyerPersona: 'Busy e-commerce owner',
       scenarioContext: 'Cold calling them for payment plans',
+      hasGatekeeper: false,
+      gatekeeperPersona: 'Strict Executive Assistant',
+      decisionMakerPersona: 'Busy CEO',
     },
   },
   {
@@ -342,6 +358,23 @@ export const NODE_CATEGORIES: NodeCategoryMeta[] = [
       label: 'Credee Pitch Deck',
       description: 'Candidate presents a 3-slide pitch deck.',
       prepTimeMinutes: 2,
+    },
+  },
+  {
+    category: 'negotiation',
+    label: 'Hardball Negotiation',
+    icon: '🤝',
+    shortDesc: 'Protect your margins',
+    color: '#eab308',
+    group: 'sales',
+    defaultData: {
+      category: 'negotiation',
+      label: 'Procurement Hardball',
+      description: 'Test the candidate\'s ability to defend pricing against aggressive discounting.',
+      buyerPersona: 'Aggressive Procurement Officer',
+      productName: 'Enterprise License',
+      targetPrice: '$50,000',
+      floorPrice: '$40,000',
     },
   },
   {
