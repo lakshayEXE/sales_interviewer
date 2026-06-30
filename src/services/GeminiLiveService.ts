@@ -401,15 +401,31 @@ export class GeminiLiveService {
   sendEmailSubmit(crmNotes: string, emailDraft: string) {
     if (!this.isSetupComplete) return;
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      const isNotesEmpty = !crmNotes || crmNotes.trim().length === 0;
+      const cleanEmail = emailDraft.replace(/Subject:\s*\n*/i, '').trim();
+      const isEmailEmpty = cleanEmail.length === 0;
+
+      let promptText = `[SYSTEM NOTIFICATION: The candidate has officially SUBMITTED their email and CRM notes by clicking the 'Send' button.]\n\n`;
+      promptText += `Final CRM Notes:\n${crmNotes || '(Empty)'}\n\n`;
+      promptText += `Final Email:\n${emailDraft || '(Empty)'}\n\n`;
+
+      if (isNotesEmpty && isEmailEmpty) {
+        promptText += `[INSTRUCTION: Call out the candidate out loud for submitting completely blank notes and a blank email draft. Ask them why they didn't write anything. Show annoyance/disappointment in your voice.]`;
+      } else if (isEmailEmpty) {
+        promptText += `[INSTRUCTION: Call out the candidate for leaving the email draft completely empty, even if they wrote notes. Ask them to explain why they didn't draft the email.]`;
+      } else {
+        promptText += `[INSTRUCTION: The candidate has submitted their email/notes. Grade the email out loud to the candidate.]`;
+      }
+
       const msg = {
         clientContent: {
           turns: [
             {
               role: "user",
-              parts: [{ text: `[SYSTEM NOTIFICATION: The candidate has officially SUBMITTED their email and CRM notes by clicking the 'Send' button.]\n\nFinal CRM Notes:\n${crmNotes}\n\nFinal Email:\n${emailDraft}\n\n[INSTRUCTION: The candidate has submitted. You must now grade the email out loud to the candidate.]` }]
+              parts: [{ text: promptText }]
             }
           ],
-          turnComplete: false
+          turnComplete: true
         }
       };
       this.ws.send(JSON.stringify(msg));

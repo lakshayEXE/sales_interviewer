@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
-import { PhoneCall, LogOut, Loader2, User, Code2, AlertTriangle, Maximize, Circle, Eye, EyeOff, Bot } from 'lucide-react';
+import { PhoneCall, LogOut, Loader2, User, AlertTriangle, Maximize, Circle, Eye, EyeOff, Bot } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { startRinging, stopRinging, playTransferBeep, playHangupTone, startHoldMusic, stopHoldMusic } from '../utils/phoneAudio';
 import { TranscriptSidebar } from '../components/TranscriptSidebar';
@@ -122,7 +122,7 @@ export const Interviewer: React.FC = () => {
   // Starter code the model loads into the editor via the set_editor_code tool (debug/optimize).
   const [injectedCode, setInjectedCode] = useState<string | undefined>(undefined);
   const [injectedLanguage, setInjectedLanguage] = useState<string | undefined>(undefined);
-  
+
   const [roleplayState, setRoleplayState] = useState<'manager' | 'coach' | 'ceo' | 'hold' | 'gatekeeper' | null>(null);
 
   const audioRecorderRef = useRef<AudioRecorder | null>(null);
@@ -134,6 +134,7 @@ export const Interviewer: React.FC = () => {
   const faceProctorRef = useRef<FaceProctor | null>(null);
   const lastNudgeRef = useRef<number>(0);
   const lastEscalationRef = useRef<number>(0);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const session = React.useMemo(() => {
     if (sessionData) {
@@ -391,7 +392,7 @@ export const Interviewer: React.FC = () => {
         playTransferBeep();
         geminiServiceRef.current?.sendHoldSilence();
         startHoldMusic();
-        
+
         setTimeout(() => {
           stopHoldMusic();
           if (!geminiServiceRef.current) return;
@@ -626,7 +627,7 @@ export const Interviewer: React.FC = () => {
 
   return (
     <PageTransition className="flex w-full h-full">
-      <div className="flex-1 flex flex-col pt-20 px-6 pb-6 gap-6 relative">
+      <div ref={containerRef} className="flex-1 flex flex-col pt-20 px-6 pb-6 gap-6 relative">
         {/* Ambient slow-drifting gradient backdrop */}
         <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
           <motion.div
@@ -694,13 +695,12 @@ export const Interviewer: React.FC = () => {
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.8, y: 10 }}
                     transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                    className={`hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-[0.14em] border shrink-0 shadow-lg ${
-                      roleplayState === 'ceo' ? 'bg-green-500/15 text-green-400 border-green-500/30 shadow-[0_0_20px_rgba(34,197,94,0.3)]' :
+                    className={`hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-[0.14em] border shrink-0 shadow-lg ${roleplayState === 'ceo' ? 'bg-green-500/15 text-green-400 border-green-500/30 shadow-[0_0_20px_rgba(34,197,94,0.3)]' :
                       roleplayState === 'hold' ? 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30 shadow-[0_0_20px_rgba(234,179,8,0.3)] animate-pulse' :
-                      roleplayState === 'gatekeeper' ? 'bg-purple-500/15 text-purple-400 border-purple-500/30 shadow-[0_0_20px_rgba(168,85,247,0.3)]' :
-                      roleplayState === 'coach' ? 'bg-blue-500/15 text-blue-400 border-blue-500/30 shadow-[0_0_20px_rgba(59,130,246,0.3)]' :
-                      'bg-amber-500/15 text-amber-400 border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.3)]'
-                    }`}
+                        roleplayState === 'gatekeeper' ? 'bg-purple-500/15 text-purple-400 border-purple-500/30 shadow-[0_0_20px_rgba(168,85,247,0.3)]' :
+                          roleplayState === 'coach' ? 'bg-blue-500/15 text-blue-400 border-blue-500/30 shadow-[0_0_20px_rgba(59,130,246,0.3)]' :
+                            'bg-amber-500/15 text-amber-400 border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.3)]'
+                      }`}
                   >
                     <span className="text-sm">
                       {roleplayState === 'ceo' ? '👑' : roleplayState === 'hold' ? '⏳' : roleplayState === 'gatekeeper' ? '📞' : roleplayState === 'coach' ? '🎓' : '🛡️'}
@@ -746,14 +746,14 @@ export const Interviewer: React.FC = () => {
 
             {/* RIGHT: actions */}
             <div className="flex items-center gap-1.5 shrink-0">
-              <button
+              {/* <button
                 type="button"
                 onClick={() => setShowCodeEditor(!showCodeEditor)}
                 className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-textMain hover:text-white bg-surface/60 hover:bg-surfaceHighlight border border-white/[0.06] hover:border-white/15 transition-all"
               >
                 <Code2 size={15} />
-                <span className="hidden sm:inline">{showCodeEditor ? 'Hide IDE' : 'Show IDE'}</span>
-              </button>
+                <span className="hidden sm:inline" >{showCodeEditor ? 'Hide IDE' : 'Show IDE'}</span>
+              </button> */}
               <button
                 type="button"
                 onClick={endCall}
@@ -857,75 +857,83 @@ export const Interviewer: React.FC = () => {
                 <PitchDeckViewer
                   prepTimeMinutes={2}
                   onSlideChange={handleSlideChange}
-                  onPrepComplete={() => {}}
+                  onPrepComplete={() => { }}
                   onStartPitch={() => geminiServiceRef.current?.sendPitchStart()}
                 />
               </motion.div>
             )}
           </AnimatePresence>
 
-          <motion.div
-            layout
-            className={
-              (showCodeEditor || showCRMEditor || showPresentationViewer)
-                ? "absolute bottom-8 right-8 w-80 h-56 z-50 rounded-3xl border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden bg-surface/90 backdrop-blur-xl"
-                : "flex-1 relative flex items-center justify-center bg-surface/30 rounded-3xl border border-white/[0.06] overflow-hidden"
-            }
-            transition={{ type: "spring", bounce: 0.1, duration: 0.6 }}
-          >
-            {/* Audio-reactive aura: softly breathes with the AI's voice */}
-            {!(showCodeEditor || showCRMEditor || showPresentationViewer) && (
-              <div
-                className="pointer-events-none absolute inset-0 flex items-center justify-center transition-opacity duration-200"
-                style={{ opacity: 0.35 + Math.min(0.55, aiVolume * 0.012) }}
-              >
+          {!showPresentationViewer && (
+            <motion.div
+              layout
+              className={
+                (showCodeEditor || showCRMEditor)
+                  ? "absolute bottom-8 right-8 w-80 h-56 z-50 rounded-3xl border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden bg-surface/90 backdrop-blur-xl"
+                  : "flex-1 relative flex items-center justify-center bg-surface/30 rounded-3xl border border-white/[0.06] overflow-hidden"
+              }
+              transition={{ type: "spring", bounce: 0.1, duration: 0.6 }}
+            >
+              {/* Audio-reactive aura: softly breathes with the AI's voice */}
+              {!(showCodeEditor || showCRMEditor) && (
                 <div
-                  className="rounded-full transition-[width,height,filter] duration-200"
-                  style={{
-                    width: `${340 + Math.min(140, aiVolume * 2.4)}px`,
-                    height: `${340 + Math.min(140, aiVolume * 2.4)}px`,
-                    background: 'radial-gradient(circle at center, rgba(56, 189, 248, 0.35), rgba(56, 189, 248, 0) 70%)',
-                    filter: `blur(${36 + Math.min(28, aiVolume * 0.5)}px)`,
-                  }}
-                />
-              </div>
-            )}
-
-            <Visualizer micVolume={micVolume} aiVolume={aiVolume} />
-
-            {/* Conversational state pill (full-size only) */}
-            {!(showCodeEditor || showCRMEditor || showPresentationViewer) && isConnected && isRecording && (
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={speakerState}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.2 }}
-                  className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2.5 px-4 py-2 rounded-full glass-panel"
+                  className="pointer-events-none absolute inset-0 flex items-center justify-center transition-opacity duration-200"
+                  style={{ opacity: 0.35 + Math.min(0.55, aiVolume * 0.012) }}
                 >
-                  <span className="relative flex h-2 w-2">
-                    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${speaker.ring}`} />
-                    <span className={`relative inline-flex rounded-full h-2 w-2 ${speaker.dot}`} />
-                  </span>
-                  <span className={`text-sm font-medium ${speaker.text}`}>
-                    {speaker.label}
-                  </span>
-                </motion.div>
-              </AnimatePresence>
-            )}
+                  <div
+                    className="rounded-full transition-[width,height,filter] duration-200"
+                    style={{
+                      width: `${340 + Math.min(140, aiVolume * 2.4)}px`,
+                      height: `${340 + Math.min(140, aiVolume * 2.4)}px`,
+                      background: 'radial-gradient(circle at center, rgba(56, 189, 248, 0.35), rgba(56, 189, 248, 0) 70%)',
+                      filter: `blur(${36 + Math.min(28, aiVolume * 0.5)}px)`,
+                    }}
+                  />
+                </div>
+              )}
 
-            {!isConnected && isRecording && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm z-20">
-                <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
-                <p className="text-textMain font-medium">Connecting to Gemini...</p>
-              </div>
-            )}
-          </motion.div>
+              <Visualizer micVolume={micVolume} aiVolume={aiVolume} />
+
+              {/* Conversational state pill (full-size only) */}
+              {!(showCodeEditor || showCRMEditor) && isConnected && isRecording && (
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={speakerState}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2.5 px-4 py-2 rounded-full glass-panel"
+                  >
+                    <span className="relative flex h-2 w-2">
+                      <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${speaker.ring}`} />
+                      <span className={`relative inline-flex rounded-full h-2 w-2 ${speaker.dot}`} />
+                    </span>
+                    <span className={`text-sm font-medium ${speaker.text}`}>
+                      {speaker.label}
+                    </span>
+                  </motion.div>
+                </AnimatePresence>
+              )}
+
+              {!isConnected && isRecording && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm z-20">
+                  <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
+                  <p className="text-textMain font-medium">Connecting to Gemini...</p>
+                </div>
+              )}
+            </motion.div>
+          )}
         </div>
 
         {/* Self-view PiP (kept mounted so the face detector always has a video element) */}
-        <div className={`absolute bottom-6 left-6 z-40 transition-opacity duration-300 ${isRecording ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+        <motion.div
+          drag
+          dragConstraints={containerRef}
+          dragElastic={0.1}
+          dragMomentum={false}
+          className={`absolute bottom-6 left-6 z-40 cursor-grab active:cursor-grabbing transition-opacity duration-300 ${isRecording ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        >
           <div className="relative">
             {/* Mic-reactive accent ring: scales softly with the candidate's voice */}
             <div
@@ -976,7 +984,7 @@ export const Interviewer: React.FC = () => {
               </span>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         <AnimatePresence mode="wait">
           {!isRecording && !isFullscreen && (

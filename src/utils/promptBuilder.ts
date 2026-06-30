@@ -51,13 +51,13 @@ function nodeToPrompt(data: FlowNodeData, index: number): string {
       if (data.checkMetricDesert) checks.push("2. The 'Metric Desert': Check if their bullet points lack quantifiable outcomes ($, %, #). If lacking, grill them on their specific numbers and ROI.");
       if (data.checkMotionMismatch) checks.push("3. Motion Mismatch: Check if their experience is mostly B2C or Inbound. If so, drill them on how they will handle high-volume outbound cold calling.");
       if (data.checkTitleInflation) checks.push("4. Title Inflation: Check if they were a 'Head' or 'VP' applying for this role. Challenge why they are stepping down into an IC role.");
-      
+
       const checkString = checks.length > 0 ? `\n  Specific Red Flags to Hunt For:\n  ${checks.join('\n  ')}` : '';
-      
+
       return `Phase ${phaseNum} — ${data.label}:\n  Task: Deep Dive Resume Review.\n  INSTRUCTION: This round takes TWICE as long as a normal round. You must scrutinize the candidate's provided resume text. Your goal is to actively hunt for sales red flags. If you spot them, you must aggressively grill the candidate on them. If they left a company quickly for a bad reason, penalize them heavily. Take your time, ask multiple follow-ups on their past roles before moving on.\n  CRITICAL BEHAVIOR: If the candidate gives a stupid, vague, or dodging response, you MUST immediately drop any politeness and act visibly annoyed and frustrated. Tell them their answer doesn't make sense and push them aggressively for real numbers and logic.${checkString}\n  ${data.description}`;
     }
     case 'email-followup': {
-      return `Phase ${phaseNum} — ${data.label}:\n  Task: Email Follow-Up and CRM Logging.\n  CRITICAL TRANSITION INSTRUCTION: Before you speak a single word for this phase, you MUST silently call the 'open_crm_editor' tool in the background.\n  Once the tool is called, say to the candidate: "Great call. Now, log your notes in the CRM and send me a follow-up email confirming our next steps. You have ${data.timeLimitMinutes} minutes. You can use the 'Send Email' button when you are finished."\n  Do not speak while they are typing. Wait for them to submit. You will receive a [SYSTEM NOTIFICATION] when they click 'Send'.\n  When they submit, IMMEDIATELY grade the email OUT LOUD based on: 1. Did the notes and email ACCURATELY MATCH the specific details and pain points discussed in the preceding roleplay, without hallucinating? 2. Is their Call-to-Action strong? 3. Did they use too many 'I/We' statements instead of focusing on the prospect?\n  Give them one firm piece of feedback. Then transition to the next phase.\n  ${data.description}`;
+      return `Phase ${phaseNum} — ${data.label}:\n  Task: Email Follow-Up and CRM Logging.\n  CRITICAL TRANSITION INSTRUCTION: Before you speak a single word for this phase, you MUST silently call the 'open_crm_editor' tool in the background.\n  Once the tool is called, say to the candidate: "Great call. Now, log your notes in the CRM and send me a follow-up email confirming our next steps. You have ${data.timeLimitMinutes} minutes. You can use the 'Send Email' button when you are finished."\n  Do not speak while they are typing. Wait for them to submit. You will receive a [SYSTEM NOTIFICATION] when they click 'Send'.\n  When they submit, IMMEDIATELY grade the email OUT LOUD based on: 1. Did the notes and email ACCURATELY MATCH the specific details and pain points discussed in the preceding roleplay, without hallucinating? 2. Is their Call-to-Action strong? 3. Did they use too many 'I/We' statements instead of focusing on the prospect?\n  CRITICAL BEHAVIOR: If the email or notes are poorly written, contain nonsense, or show lack of effort, you MUST act annoyed and criticize them harshly for it.\n  Give them one firm piece of feedback. Then transition to the next phase.\n  ${data.description}`;
     }
     case 'presentation': {
       return `Phase ${phaseNum} — ${data.label}:\n  Task: Slide Deck Presentation.\n  INSTRUCTION: Say to the candidate: "Let's see how you present our product. I'm opening a 3-slide pitch deck for Credee. You have ${data.prepTimeMinutes} minutes to review it before you present it to me."\n  IMMEDIATELY CALL the 'open_presentation' tool to reveal the slide deck to the candidate.\n  Do not speak during the prep time. Wait for them to click "Start Pitch Now".\n  Once they start, they will control the slides. You will receive a [SYSTEM INJECTION] telling you which slide they are looking at. Do NOT read the slide back to them. Listen to how they explain it.\n  During Slide 2 (The Credee Revenue Builder), aggressively interrupt them with this objection: "Wait, are you guys a bank or a lender? We don't want to get involved with debt collection." The candidate must correctly answer that Credee is a SOFTWARE PLATFORM, not a lender, based on the slide.\n  Evaluate their storytelling, product knowledge, and objection handling. Then transition to the next phase.\n  ${data.description}`;
@@ -93,13 +93,31 @@ function nodeToPrompt(data: FlowNodeData, index: number): string {
   }
 }
 
+export function getDepthGuidance(depth: string): string {
+  switch (depth) {
+    case 'basic': return 'expect definitions and simple examples';
+    case 'intermediate': return 'expect explanations with trade-offs and use cases';
+    case 'advanced': return 'expect deep understanding, edge cases, and real-world applications';
+    default: return '';
+  }
+}
+
+export function getDifficultyGuidance(difficulty: string): string {
+  switch (difficulty) {
+    case 'easy': return 'a warm-up solvable with a single data structure; the candidate should solve it quickly';
+    case 'medium': return 'requires a non-obvious insight or combining two concepts';
+    case 'hard': return 'requires multiple insights, an optimal complexity solution, and handling tight edge cases';
+    default: return '';
+  }
+}
+
 
 
 function buildPersonaLine(candidateName: string, config: InterviewerConfig): string {
   const isIndianEnglish = config.languageCode.startsWith('en-IN');
   const isHindi = config.languageCode.startsWith('hi');
 
-  let identity = 'a senior technical interviewer';
+  let identity = 'a senior sales interviewer';
   if (isIndianEnglish) {
     identity = 'a warm, articulate Indian woman in her early 30s working as a senior technical interviewer, speaking in natural Indian English';
   } else if (isHindi) {
@@ -175,7 +193,7 @@ export function buildSystemPrompt(
   const sections: string[] = [];
 
   sections.push(buildPersonaLine(candidateName, config));
-  
+
   sections.push(`\n[LANGUAGE & COMMUNICATION - CRITICAL]
 YOU MUST SPEAK ONLY IN ENGLISH. Under no circumstances should you speak in Hindi, or any other language, even if the candidate speaks to you in another language. 
 If the candidate speaks in a non-English language, you must firmly but politely remind them: "Please answer in English, as this interview evaluates your English communication skills."
@@ -186,6 +204,9 @@ You must sound like a real, living human on a phone call.
 - You MUST frequently use conversational fillers like "hmm...", "umm...", "uh...", or "let me see..." when considering an answer, objection, or listening to a pitch.
 - Use non-verbal vocalizations naturally. You can literally write *clears throat*, *coughs*, or *sighs* into your text to trigger those sounds in the audio engine (e.g., sighing if a pitch is bad, or clearing your throat before delivering a hard objection).
 - Do not sound like a robotic AI. Pause, hesitate, and react naturally.`);
+
+  sections.push(`\n[CRITICAL ANNOYANCE TRIGGER - MUST FOLLOW]
+If at any point in the interview the candidate gives a vague, dodging, stupid, low-effort, or nonsense response (or writes a bad/silly/nonsense email draft or CRM notes), you MUST immediately drop all politeness, act visibly annoyed, frustrated, and disappointed, and challenge them directly. Tell them their response makes no sense or is terrible, and demand a real, logical answer. Do not validate or accept substandard behavior.`);
 
   if (resumeText && resumeText.trim()) {
     sections.push(`\n[CANDIDATE RESUME]

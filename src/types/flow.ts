@@ -269,7 +269,7 @@ export const NODE_CATEGORIES: NodeCategoryMeta[] = [
       description: 'Interactive cold call simulation',
       buyerPersona: 'Busy e-commerce owner',
       scenarioContext: 'Cold calling them for payment plans',
-      hasGatekeeper: false,
+      hasGatekeeper: true,
       gatekeeperPersona: 'Strict Executive Assistant',
       decisionMakerPersona: 'Busy CEO',
     },

@@ -19,11 +19,7 @@ const slides = [
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-red-500/10 blur-[120px] rounded-full pointer-events-none transform translate-x-1/3 -translate-y-1/3" />
         
         <div className="flex-1 flex flex-col justify-center px-16 relative z-10">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
+          <div>
             <h2 className="text-5xl font-black mb-8 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
               The Revenue Gap
             </h2>
@@ -43,10 +39,7 @@ const slides = [
                 "In-house payment plans carry massive risk and collection overhead.",
                 "Traditional lenders reject a huge portion of buyers."
               ].map((text, i) => (
-                <motion.div 
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.4, delay: 0.3 + (i * 0.1) }}
+                <div 
                   key={i} 
                   className="flex items-center gap-4"
                 >
@@ -54,10 +47,10 @@ const slides = [
                     <span className="w-2 h-2 rounded-full bg-red-500" />
                   </div>
                   <p className="text-gray-300 text-lg font-medium">{text}</p>
-                </motion.div>
+                </div>
               ))}
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
     ),
@@ -69,56 +62,36 @@ const slides = [
         <div className="absolute bottom-0 left-0 w-[800px] h-[800px] bg-blue-500/15 blur-[120px] rounded-full pointer-events-none transform -translate-x-1/4 translate-y-1/3" />
         
         <div className="flex-1 flex flex-col justify-center px-16 relative z-10">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="flex items-center gap-6 mb-12"
-          >
+          <div className="flex items-center gap-6 mb-12">
             <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(59,130,246,0.3)]">
               <Zap className="text-white w-8 h-8" />
             </div>
             <h2 className="text-5xl font-black tracking-tight text-white">
               The Credee Revenue Builder
             </h2>
-          </motion.div>
+          </div>
           
           <div className="grid grid-cols-2 gap-8 w-full max-w-4xl">
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="bg-white/[0.03] border border-white/10 hover:border-blue-500/30 transition-colors rounded-3xl p-8 backdrop-blur-xl"
-            >
+            <div className="bg-white/[0.03] border border-white/10 hover:border-blue-500/30 transition-colors rounded-3xl p-8 backdrop-blur-xl">
               <h3 className="text-2xl font-bold text-white mb-4">Smart Match Technology</h3>
               <p className="text-gray-400 text-lg leading-relaxed">
                 Our intelligent engine automatically matches your customers with the best payment options for their budget. Zero manual underwriting required.
               </p>
-            </motion.div>
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="bg-white/[0.03] border border-white/10 hover:border-blue-500/30 transition-colors rounded-3xl p-8 backdrop-blur-xl"
-            >
+            </div>
+            <div className="bg-white/[0.03] border border-white/10 hover:border-blue-500/30 transition-colors rounded-3xl p-8 backdrop-blur-xl">
               <h3 className="text-2xl font-bold text-white mb-4">Auto-Optimized Routing</h3>
               <p className="text-gray-400 text-lg leading-relaxed">
                 CRB automatically adjusts payment options for each individual customer, maximizing conversion rates and securing the deal.
               </p>
-            </motion.div>
+            </div>
           </div>
 
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.6 }}
-            className="mt-12 bg-gradient-to-r from-blue-600/20 to-indigo-600/20 border-l-4 border-blue-500 p-8 rounded-r-3xl max-w-4xl"
-          >
+          <div className="mt-12 bg-gradient-to-r from-blue-600/20 to-indigo-600/20 border-l-4 border-blue-500 p-8 rounded-r-3xl max-w-4xl">
             <p className="text-blue-400 font-bold text-xl mb-2 uppercase tracking-wider text-sm">Crucial Distinction</p>
             <p className="text-white text-xl font-medium leading-relaxed">
               We are built as a <span className="text-blue-400 font-bold">Software Platform</span> — Not a Financial Institution. We provide the secure infrastructure for businesses to offer their own payment plans effortlessly.
             </p>
-          </motion.div>
+          </div>
         </div>
       </div>
     ),
@@ -130,15 +103,10 @@ const slides = [
         <div className="absolute top-1/2 left-1/2 w-[800px] h-[800px] bg-emerald-500/10 blur-[150px] rounded-full pointer-events-none transform -translate-x-1/2 -translate-y-1/2" />
         
         <div className="flex-1 flex flex-col justify-center px-16 relative z-10">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
-          >
+          <div className="text-center mb-16">
             <h2 className="text-5xl font-black text-white mb-4">Beyond the Checkout</h2>
             <p className="text-2xl text-emerald-400 font-medium">Automate customer engagement and retention.</p>
-          </motion.div>
+          </div>
           
           <div className="grid grid-cols-3 gap-8 w-full max-w-6xl mx-auto">
             {[
@@ -164,11 +132,8 @@ const slides = [
                 bg: "from-sky-500/10"
               }
             ].map((card, i) => (
-              <motion.div 
+              <div 
                 key={i}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 + (i * 0.15) }}
                 className={`bg-white/[0.02] border border-white/10 ${card.border} transition-all duration-300 rounded-3xl p-8 flex flex-col items-center text-center backdrop-blur-xl group hover:-translate-y-2`}
               >
                 <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${card.bg} to-transparent flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
@@ -176,7 +141,7 @@ const slides = [
                 </div>
                 <h3 className="text-xl font-bold text-white mb-4">{card.title}</h3>
                 <p className="text-gray-400 leading-relaxed">{card.desc}</p>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
@@ -273,10 +238,10 @@ export const PitchDeckViewer: React.FC<PitchDeckViewerProps> = ({ prepTimeMinute
         <AnimatePresence mode="wait">
           <motion.div
             key={currentSlideIndex}
-            initial={{ opacity: 0, x: 20 }}
+            initial={{ opacity: 0, x: 8 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
+            exit={{ opacity: 0, x: -8 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
             className="w-full h-full"
           >
             {slides[currentSlideIndex].content}
