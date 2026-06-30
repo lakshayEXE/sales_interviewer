@@ -1,8 +1,12 @@
 import React, { useRef, useEffect } from 'react';
 
+import { AudioPlayer } from '../services/AudioPlayer';
+import { AudioRecorder } from '../services/AudioRecorder';
+
 interface VisualizerProps {
-  micVolume: number;
-  aiVolume: number;
+  audioPlayerRef: React.RefObject<AudioPlayer | null>;
+  audioRecorderRef: React.RefObject<AudioRecorder | null>;
+  showAura?: boolean;
 }
 
 interface Ripple {
@@ -14,15 +18,9 @@ interface Ripple {
 const AI_COLOR = { r: 204, g: 120, b: 92 };   // clay
 const USER_COLOR = { r: 106, g: 155, b: 204 }; // sky
 
-export const Visualizer: React.FC<VisualizerProps> = ({ micVolume, aiVolume }) => {
+export const Visualizer: React.FC<VisualizerProps> = ({ audioPlayerRef, audioRecorderRef, showAura = true }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const volRef = useRef({ ai: 0, mic: 0 });
-
-  // keep latest volumes without restarting the animation loop
-  useEffect(() => {
-    volRef.current.ai = aiVolume;
-    volRef.current.mic = micVolume;
-  }, [aiVolume, micVolume]);
+  const auraRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -62,9 +60,25 @@ export const Visualizer: React.FC<VisualizerProps> = ({ micVolume, aiVolume }) =
       phase += 0.02;
       frame++;
 
+      // Pull volumes directly from the refs instead of React state
+      const rawAi = audioPlayerRef.current?.getVolume() || 0;
+      const rawMic = audioRecorderRef.current?.getVolume() || 0;
+
+      // Update the Aura div directly via DOM for zero-render performance
+      if (auraRef.current) {
+        auraRef.current.style.opacity = `${0.35 + Math.min(0.55, rawAi * 0.012)}`;
+        const child = auraRef.current.firstChild as HTMLElement;
+        if (child) {
+          const size = 340 + Math.min(140, rawAi * 2.4);
+          child.style.width = `${size}px`;
+          child.style.height = `${size}px`;
+          child.style.filter = `blur(${36 + Math.min(28, rawAi * 0.5)}px)`;
+        }
+      }
+
       // Smooth the incoming volumes (0..~128 typical)
-      const targetAi = Math.min(1, volRef.current.ai / 70);
-      const targetMic = Math.min(1, volRef.current.mic / 70);
+      const targetAi = Math.min(1, rawAi / 70);
+      const targetMic = Math.min(1, rawMic / 70);
       smoothAi = lerp(smoothAi, targetAi, 0.12);
       smoothMic = lerp(smoothMic, targetMic, 0.12);
 
@@ -135,8 +149,26 @@ export const Visualizer: React.FC<VisualizerProps> = ({ micVolume, aiVolume }) =
   }, []);
 
   return (
-    <div className="w-full h-full flex items-center justify-center overflow-hidden">
-      <canvas ref={canvasRef} className="w-full h-full" />
+    <div className="w-full h-full flex items-center justify-center overflow-hidden relative">
+      {/* Audio-reactive aura: softly breathes with the AI's voice */}
+      {showAura && (
+        <div
+          ref={auraRef}
+          className="pointer-events-none absolute inset-0 flex items-center justify-center transition-opacity duration-200"
+          style={{ opacity: 0.35 }}
+        >
+          <div
+            className="rounded-full transition-[width,height,filter] duration-200"
+            style={{
+              width: '340px',
+              height: '340px',
+              background: 'radial-gradient(circle at center, rgba(56, 189, 248, 0.35), rgba(56, 189, 248, 0) 70%)',
+              filter: 'blur(36px)',
+            }}
+          />
+        </div>
+      )}
+      <canvas ref={canvasRef} className="w-full h-full relative z-10" />
     </div>
   );
 };

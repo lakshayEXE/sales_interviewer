@@ -13,6 +13,8 @@ export class GeminiLiveService {
   // Fires once per completed utterance, for both the candidate (user) and the AI interviewer.
   public onTranscript: ((sender: 'ai' | 'user', text: string) => void) | null = null;
   public onConnectionStateChange: ((connected: boolean) => void) | null = null;
+  // Fires when the server recognizes an interruption (barge-in) by the user.
+  public onInterrupt: (() => void) | null = null;
   // Fires when the model reports (via the set_current_question tool) the current question/problem.
   public onQuestion: ((question: string) => void) | null = null;
   // Fires when the model loads starter code into the editor (via the set_editor_code tool).
@@ -216,6 +218,7 @@ export class GeminiLiveService {
       if (parsed.setupComplete) {
         console.log("Setup complete. Ready for audio streaming.");
         this.isSetupComplete = true;
+        this.sendText("[SYSTEM: The interview has now begun. Please greet the candidate warmly and wait for their response.]");
       }
 
       // Look for serverContent
@@ -246,6 +249,12 @@ export class GeminiLiveService {
               this.aiBuffer += part.text;
             }
           }
+        }
+
+        // Handle interruption (barge-in) from the server
+        if (sc.interrupted) {
+          this.aiBuffer = ''; // discard the incomplete sentence from the transcript
+          this.onInterrupt?.();
         }
 
         // End of the model's turn: commit whatever is buffered for both sides.

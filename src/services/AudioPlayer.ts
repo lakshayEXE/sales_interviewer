@@ -3,6 +3,7 @@ export class AudioPlayer {
   private analyser: AnalyserNode | null = null;
   private nextPlayTime: number = 0;
   private isPlaying: boolean = false;
+  private scheduledNodes: AudioBufferSourceNode[] = [];
 
   constructor() {}
 
@@ -42,11 +43,23 @@ export class AudioPlayer {
     const startTime = Math.max(this.audioContext.currentTime, this.nextPlayTime);
     source.start(startTime);
     
+    this.scheduledNodes.push(source);
+    source.onended = () => {
+      this.scheduledNodes = this.scheduledNodes.filter(n => n !== source);
+    };
+    
     this.nextPlayTime = startTime + buffer.duration;
   }
 
   stop() {
     this.isPlaying = false;
+    this.scheduledNodes.forEach(node => {
+      try {
+        node.stop();
+        node.disconnect();
+      } catch (e) {}
+    });
+    this.scheduledNodes = [];
     if (this.audioContext && this.audioContext.state !== 'closed') {
       this.audioContext.close();
       this.audioContext = null;
@@ -57,6 +70,13 @@ export class AudioPlayer {
   clearQueue() {
     if (this.audioContext) {
       this.nextPlayTime = this.audioContext.currentTime;
+      this.scheduledNodes.forEach(node => {
+        try {
+          node.stop();
+          node.disconnect();
+        } catch (e) {}
+      });
+      this.scheduledNodes = [];
     }
   }
 

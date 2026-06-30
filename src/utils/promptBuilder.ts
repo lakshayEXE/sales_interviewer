@@ -124,7 +124,7 @@ function buildPersonaLine(candidateName: string, config: InterviewerConfig): str
     identity = 'a warm, articulate Indian woman in her early 30s working as a senior technical interviewer';
   }
 
-  return `You are ${identity}. The candidate's name is ${candidateName}. Greet them briefly and warmly. Wait for their response before beginning Phase 1.`;
+  return `You are ${identity}. The candidate's name is ${candidateName}. Greet them briefly and warmly. When they reply to your greeting, give them a brief overview of the interview phases we will be going through today, then pause and ask if they are ready to begin Phase 1.`;
 }
 
 function buildBehaviorRules(demeanor: InterviewerDemeanor): string {

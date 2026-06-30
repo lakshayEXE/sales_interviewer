@@ -80,6 +80,75 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const PipRing: React.FC<{ audioRecorderRef: React.RefObject<AudioRecorder | null> }> = ({ audioRecorderRef }) => {
+  const ringRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    let frameId: number;
+    const loop = () => {
+      const vol = audioRecorderRef.current?.getVolume() || 0;
+      if (ringRef.current) {
+        ringRef.current.style.boxShadow = `0 0 ${Math.min(40, vol * 0.8)}px ${Math.min(8, vol * 0.18)}px rgba(56, 189, 248, ${Math.min(0.55, vol * 0.012)})`;
+        ringRef.current.style.opacity = vol > 2 ? '1' : '0';
+      }
+      frameId = requestAnimationFrame(loop);
+    };
+    loop();
+    return () => cancelAnimationFrame(frameId);
+  }, [audioRecorderRef]);
+  return <div ref={ringRef} className="absolute -inset-1 rounded-[1.75rem] pointer-events-none transition-[box-shadow,opacity] duration-150" />;
+};
+
+const SpeakerStatus: React.FC<{ audioPlayerRef: React.RefObject<AudioPlayer | null>, audioRecorderRef: React.RefObject<AudioRecorder | null>, transcript: any[] }> = ({ audioPlayerRef, audioRecorderRef, transcript }) => {
+  type SpeakerState = 'speaking' | 'listening' | 'your-turn' | 'thinking';
+  const [speakerState, setSpeakerState] = useState<SpeakerState>('thinking');
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const aiVolume = audioPlayerRef.current?.getVolume() || 0;
+      const micVolume = audioRecorderRef.current?.getVolume() || 0;
+      let state: SpeakerState = 'thinking';
+      if (aiVolume > 5 && aiVolume >= micVolume) state = 'speaking';
+      else if (micVolume > 5) state = 'listening';
+      else {
+        const last = transcript[transcript.length - 1];
+        if (last) state = last.sender === 'ai' ? 'your-turn' : 'thinking';
+      }
+      setSpeakerState(state);
+    }, 250);
+    return () => clearInterval(interval);
+  }, [audioPlayerRef, audioRecorderRef, transcript]);
+
+  const speakerMeta: Record<SpeakerState, { label: string; dot: string; ring: string; text: string }> = {
+    speaking: { label: 'AI speaking', dot: 'bg-primary', ring: 'bg-primary', text: 'text-textMain' },
+    listening: { label: 'Listening', dot: 'bg-sky-400', ring: 'bg-sky-400', text: 'text-textMain' },
+    'your-turn': { label: 'Your turn', dot: 'bg-emerald-400', ring: 'bg-emerald-400', text: 'text-textMain' },
+    thinking: { label: 'Thinking…', dot: 'bg-amber-400', ring: 'bg-amber-400', text: 'text-textMuted' },
+  };
+
+  const speaker = speakerMeta[speakerState];
+
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={speakerState}
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -4 }}
+        transition={{ duration: 0.2 }}
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2.5 px-4 py-2 rounded-full glass-panel"
+      >
+        <span className="relative flex h-2 w-2">
+          <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${speaker.ring}`} />
+          <span className={`relative inline-flex rounded-full h-2 w-2 ${speaker.dot}`} />
+        </span>
+        <span className={`text-sm font-medium ${speaker.text}`}>
+          {speaker.label}
+        </span>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
 export const Interviewer: React.FC = () => {
   const { sessionData } = useParams<{ sessionData: string }>();
   const location = useLocation();
@@ -108,8 +177,6 @@ export const Interviewer: React.FC = () => {
 
   const [isConnected, setIsConnected] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
-  const [micVolume, setMicVolume] = useState(0);
-  const [aiVolume, setAiVolume] = useState(0);
   const [elapsedMs, setElapsedMs] = useState(0);
 
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -345,6 +412,11 @@ export const Interviewer: React.FC = () => {
         audioPlayerRef.current?.playChunk(base64);
       };
 
+      geminiServiceRef.current.onInterrupt = () => {
+        // Clear the local audio player buffer immediately on barge-in
+        audioPlayerRef.current?.clearQueue();
+      };
+
       geminiServiceRef.current.onTranscript = (sender, text) => {
         const clean = text.trim();
         if (!clean) return;
@@ -433,17 +505,7 @@ export const Interviewer: React.FC = () => {
     };
   }, [apiKey]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (audioRecorderRef.current) {
-        setMicVolume(audioRecorderRef.current.getVolume());
-      }
-      if (audioPlayerRef.current) {
-        setAiVolume(audioPlayerRef.current.getVolume());
-      }
-    }, 50);
-    return () => clearInterval(interval);
-  }, []);
+  // Volume state loop removed for performance: Visualizer now pulls from refs directly.
 
   // Elapsed-time ticker: runs only while the session is live
   useEffect(() => {
@@ -573,22 +635,7 @@ export const Interviewer: React.FC = () => {
     if (length >= 40) reportProctorEvent('paste', 'behavioral');
   }, [reportProctorEvent]);
 
-  // Conversational state machine
-  type SpeakerState = 'speaking' | 'listening' | 'your-turn' | 'thinking';
-  const VOL_THRESHOLD = 5;
-  const speakerState: SpeakerState = (() => {
-    if (aiVolume > VOL_THRESHOLD && aiVolume >= micVolume) return 'speaking';
-    if (micVolume > VOL_THRESHOLD) return 'listening';
-    const last = transcript[transcript.length - 1];
-    if (!last) return 'thinking';
-    return last.sender === 'ai' ? 'your-turn' : 'thinking';
-  })();
-  const speakerMeta: Record<SpeakerState, { label: string; dot: string; ring: string; text: string }> = {
-    speaking: { label: 'AI speaking', dot: 'bg-primary', ring: 'bg-primary', text: 'text-textMain' },
-    listening: { label: 'Listening', dot: 'bg-sky-400', ring: 'bg-sky-400', text: 'text-textMain' },
-    'your-turn': { label: 'Your turn', dot: 'bg-emerald-400', ring: 'bg-emerald-400', text: 'text-textMain' },
-    thinking: { label: 'Thinking…', dot: 'bg-amber-400', ring: 'bg-amber-400', text: 'text-textMuted' },
-  };
+  // SpeakerState has been extracted to <SpeakerStatus /> for performance.
 
   // Heuristic fallback: scan backward for the last AI turn that contains a detectable
   // question. Used only until the model reports a question via the set_current_question tool.
@@ -605,7 +652,6 @@ export const Interviewer: React.FC = () => {
   // Prefer the authoritative tool-reported question; fall back to the heuristic when the
   // model hasn't called the tool yet. Shown above the IDE so the candidate can re-read it.
   const currentQuestion = toolQuestion || heuristicQuestion;
-  const speaker = speakerMeta[speakerState];
 
   // Face health: warn if a recent ML event (no-face/looking-away) was raised
   type FaceHealth = 'ok' | 'warn';
@@ -874,46 +920,16 @@ export const Interviewer: React.FC = () => {
               }
               transition={{ type: "spring", bounce: 0.1, duration: 0.6 }}
             >
-              {/* Audio-reactive aura: softly breathes with the AI's voice */}
-              {!(showCodeEditor || showCRMEditor) && (
-                <div
-                  className="pointer-events-none absolute inset-0 flex items-center justify-center transition-opacity duration-200"
-                  style={{ opacity: 0.35 + Math.min(0.55, aiVolume * 0.012) }}
-                >
-                  <div
-                    className="rounded-full transition-[width,height,filter] duration-200"
-                    style={{
-                      width: `${340 + Math.min(140, aiVolume * 2.4)}px`,
-                      height: `${340 + Math.min(140, aiVolume * 2.4)}px`,
-                      background: 'radial-gradient(circle at center, rgba(56, 189, 248, 0.35), rgba(56, 189, 248, 0) 70%)',
-                      filter: `blur(${36 + Math.min(28, aiVolume * 0.5)}px)`,
-                    }}
-                  />
-                </div>
-              )}
-
-              <Visualizer micVolume={micVolume} aiVolume={aiVolume} />
+              {/* Visualizer handles its own high-frequency aura animation loop */}
+              <Visualizer 
+                audioPlayerRef={audioPlayerRef} 
+                audioRecorderRef={audioRecorderRef} 
+                showAura={!(showCodeEditor || showCRMEditor)}
+              />
 
               {/* Conversational state pill (full-size only) */}
               {!(showCodeEditor || showCRMEditor) && isConnected && isRecording && (
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={speakerState}
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2.5 px-4 py-2 rounded-full glass-panel"
-                  >
-                    <span className="relative flex h-2 w-2">
-                      <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${speaker.ring}`} />
-                      <span className={`relative inline-flex rounded-full h-2 w-2 ${speaker.dot}`} />
-                    </span>
-                    <span className={`text-sm font-medium ${speaker.text}`}>
-                      {speaker.label}
-                    </span>
-                  </motion.div>
-                </AnimatePresence>
+                <SpeakerStatus audioPlayerRef={audioPlayerRef} audioRecorderRef={audioRecorderRef} transcript={transcript} />
               )}
 
               {!isConnected && isRecording && (
@@ -936,13 +952,7 @@ export const Interviewer: React.FC = () => {
         >
           <div className="relative">
             {/* Mic-reactive accent ring: scales softly with the candidate's voice */}
-            <div
-              className="absolute -inset-1 rounded-[1.75rem] pointer-events-none transition-[box-shadow,opacity] duration-150"
-              style={{
-                boxShadow: `0 0 ${Math.min(40, micVolume * 0.8)}px ${Math.min(8, micVolume * 0.18)}px rgba(56, 189, 248, ${Math.min(0.55, micVolume * 0.012)})`,
-                opacity: micVolume > 2 ? 1 : 0,
-              }}
-            />
+            <PipRing audioRecorderRef={audioRecorderRef} />
             <div className="relative w-52 h-36 rounded-3xl overflow-hidden border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.55)] bg-black/60">
               <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover -scale-x-100" />
 
